@@ -3,624 +3,672 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Banco de Questões Automática — Conversor de Provas PDF → DOCX</title>
+<title>TCF — Tecnologia Contribuinte para os Avanços Militares</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root{
-    --navy: #0b1f33;
-    --navy-2: #12283f;
-    --paper: #efe8d8;
-    --paper-2: #e4dcc6;
-    --brass: #b8912f;
-    --brass-2: #d4ad4a;
-    --red: #a63d2f;
-    --ink: #1c2b3a;
-    --line: rgba(184,145,47,0.35);
+    --bg:#0A0E17;
+    --panel:#111827;
+    --panel-2:#161F32;
+    --line: rgba(122,222,178,0.16);
+    --green:#4ADE80;
+    --green-dim: rgba(74,222,128,0.55);
+    --amber:#F0A868;
+    --ink:#E7ECF3;
+    --ink-dim:#8B98AC;
+    --radar-sweep-w: 900px;
   }
   *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
   body{
     margin:0;
     background:
-      radial-gradient(circle at 15% 10%, rgba(184,145,47,0.08), transparent 40%),
-      var(--navy);
-    color: var(--paper);
-    font-family:'Inter', sans-serif;
-    min-height:100vh;
+      radial-gradient(ellipse at 50% -10%, rgba(74,222,128,0.09), transparent 55%),
+      var(--bg);
+    color:var(--ink);
+    font-family:'IBM Plex Sans', sans-serif;
+    -webkit-font-smoothing:antialiased;
   }
-  .wrap{max-width:920px;margin:0 auto;padding:40px 20px 80px;}
-  header{
-    display:flex; align-items:flex-start; justify-content:space-between; gap:20px;
+  h1,h2,h3,.display{font-family:'Rajdhani', sans-serif; text-transform:uppercase; letter-spacing:0.02em;}
+  .mono{font-family:'IBM Plex Mono', monospace;}
+  a{color:var(--green);}
+
+  /* faint scanline + grid texture over everything */
+  .scanlines{
+    position:fixed; inset:0; pointer-events:none; z-index:5;
+    background: repeating-linear-gradient(to bottom, rgba(255,255,255,0.012) 0px, rgba(255,255,255,0.012) 1px, transparent 1px, transparent 3px);
+    mix-blend-mode:overlay;
+  }
+  .gridbg{
+    position:fixed; inset:0; pointer-events:none; z-index:1; opacity:0.35;
+    background-image:
+      linear-gradient(rgba(122,222,178,0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(122,222,178,0.05) 1px, transparent 1px);
+    background-size: 42px 42px;
+    mask-image: radial-gradient(ellipse at 50% 0%, black 0%, transparent 70%);
+  }
+
+  header.top{
+    position:sticky; top:0; z-index:50;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:14px 28px;
+    background:rgba(10,14,23,0.85);
+    backdrop-filter:blur(8px);
     border-bottom:1px solid var(--line);
-    padding-bottom:24px; margin-bottom:28px;
   }
-  .brand-mark{
-    width:52px;height:52px;border:2px solid var(--brass);
-    border-radius:50%;
-    display:flex;align-items:center;justify-content:center;
-    font-family:'Special Elite',monospace;
-    font-size:22px; color:var(--brass-2); flex:none;
-    transform:rotate(-6deg);
+  .brand{display:flex; align-items:center; gap:10px;}
+  .brand .dot{width:9px;height:9px;border-radius:50%;background:var(--green); box-shadow:0 0 8px var(--green);}
+  .brand span{font-family:'Rajdhani',sans-serif; font-weight:700; letter-spacing:0.12em; font-size:15px;}
+  nav.top-nav a{
+    color:var(--ink-dim); text-decoration:none; font-size:13px; margin-left:26px;
+    font-family:'IBM Plex Mono', monospace; letter-spacing:0.03em;
+    border-bottom:1px solid transparent; padding-bottom:2px;
+    transition:color .2s, border-color .2s;
   }
-  h1{
-    font-family:'Special Elite',monospace;
-    font-size:26px; letter-spacing:0.5px; margin:0 0 4px;
-    color:var(--paper);
-  }
-  header p{margin:0;color:#c9c0a8;font-size:13.5px;max-width:480px;line-height:1.5;}
-  .stamp{
-    font-family:'Special Elite',monospace;
-    font-size:11px; color:var(--red); border:1.5px solid var(--red);
-    padding:5px 10px; border-radius:3px; transform:rotate(4deg);
-    white-space:nowrap; align-self:center; opacity:0.85;
-  }
+  nav.top-nav a:hover{color:var(--green); border-color:var(--green-dim);}
 
-  .tabs{display:flex; gap:2px; margin-bottom:24px; border-bottom:1px solid var(--line);}
-  .tab-btn{
-    background:none;border:none;color:#a89b78;
-    font-family:'Inter',sans-serif; font-weight:600; font-size:14px;
-    padding:12px 18px; cursor:pointer; border-bottom:2px solid transparent;
-    transition:.15s;
+  /* HERO */
+  .hero{
+    position:relative; overflow:hidden;
+    min-height:88vh;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    text-align:center;
+    padding:100px 20px 60px;
+    border-bottom:1px solid var(--line);
   }
-  .tab-btn:hover{color:var(--paper);}
-  .tab-btn.active{color:var(--brass-2); border-bottom-color:var(--brass-2);}
-  .panel{display:none;}
-  .panel.active{display:block; animation:fade .25s ease;}
-  @keyframes fade{from{opacity:0; transform:translateY(4px)} to{opacity:1; transform:none}}
+  .radar-wrap{
+    position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+    width:var(--radar-sweep-w); height:var(--radar-sweep-w);
+    z-index:0; opacity:0.9;
+  }
+  .radar-ring{
+    position:absolute; border:1px solid rgba(74,222,128,0.14); border-radius:50%;
+    top:50%; left:50%; transform:translate(-50%,-50%);
+  }
+  .radar-sweep{
+    position:absolute; top:50%; left:50%; width:50%; height:2px;
+    transform-origin:left center;
+    background:linear-gradient(90deg, rgba(74,222,128,0.85), transparent);
+    animation:sweep 5s linear infinite;
+    filter:drop-shadow(0 0 6px rgba(74,222,128,0.6));
+  }
+  .radar-sweep::before{
+    content:''; position:absolute; right:0; top:50%; width:50vw; height:50vw;
+    transform:translate(0,-50%) rotate(0deg);
+    background:conic-gradient(from -18deg, rgba(74,222,128,0.28), transparent 40deg);
+    border-radius:0;
+  }
+  @keyframes sweep{ from{transform:translateY(-50%) rotate(0deg);} to{transform:translateY(-50%) rotate(360deg);} }
+  .blip{position:absolute; width:5px;height:5px;border-radius:50%;background:var(--amber); box-shadow:0 0 8px var(--amber); animation:blink 3.4s ease-in-out infinite;}
+  @keyframes blink{0%,100%{opacity:0.15;}50%{opacity:1;}}
 
-  .card{
-    background: var(--paper);
-    color: var(--ink);
-    border-radius:6px;
-    padding:28px;
-    box-shadow: 0 12px 30px rgba(0,0,0,0.35);
+  .eyebrow{
+    font-family:'IBM Plex Mono', monospace; color:var(--green); letter-spacing:0.25em;
+    font-size:12px; z-index:2; margin-bottom:22px; display:flex; align-items:center; gap:10px;
+  }
+  .eyebrow::before,.eyebrow::after{content:''; width:26px; height:1px; background:var(--green-dim);}
+  h1.title{
+    z-index:2; font-size:clamp(2.1rem, 5.4vw, 4.4rem); line-height:1.05; font-weight:700;
+    max-width:1000px; margin:0 0 22px;
+    color:#F4F8FC;
+  }
+  h1.title em{font-style:normal; color:var(--green);}
+  .subtitle{
+    z-index:2; max-width:640px; color:var(--ink-dim); font-size:16px; line-height:1.6; margin-bottom:34px;
+  }
+  .hero-meta{
+    z-index:2; display:flex; gap:36px; flex-wrap:wrap; justify-content:center;
+    font-family:'IBM Plex Mono', monospace; font-size:12px; color:var(--ink-dim);
+  }
+  .hero-meta b{color:var(--ink); display:block; font-size:20px; font-family:'Rajdhani',sans-serif;}
+  .cta-row{z-index:2; display:flex; gap:14px; margin-bottom:44px;}
+  .btn{
+    font-family:'IBM Plex Mono', monospace; font-size:13px; letter-spacing:0.04em;
+    padding:12px 22px; border-radius:2px; text-decoration:none; border:1px solid var(--green-dim);
+    color:var(--green); transition:all .2s;
+  }
+  .btn.solid{background:var(--green); color:#08120C; border-color:var(--green); font-weight:600;}
+  .btn:hover{background:rgba(74,222,128,0.12);}
+  .btn.solid:hover{background:#63f097;}
+
+  section{padding:90px 24px; position:relative; z-index:2; max-width:1180px; margin:0 auto;}
+  .section-head{margin-bottom:48px; max-width:720px;}
+  .section-head .eyebrow2{
+    font-family:'IBM Plex Mono', monospace; color:var(--amber); font-size:12px; letter-spacing:0.2em; margin-bottom:10px; display:block;
+  }
+  .section-head h2{font-size:clamp(1.7rem,3.4vw,2.6rem); margin:0 0 14px; color:#F4F8FC;}
+  .section-head p{color:var(--ink-dim); line-height:1.7; font-size:15px;}
+
+  /* STATS */
+  .stat-strip{
+    display:grid; grid-template-columns:repeat(4,1fr); gap:1px;
+    background:var(--line); border:1px solid var(--line); margin-bottom:46px; border-radius:4px; overflow:hidden;
+  }
+  .stat-cell{background:var(--panel); padding:24px 20px; text-align:center;}
+  .stat-cell .num{font-family:'Rajdhani',sans-serif; font-weight:700; font-size:2.4rem; color:var(--green);}
+  .stat-cell .lbl{font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--ink-dim); letter-spacing:0.04em; margin-top:6px;}
+
+  .chart-grid{display:grid; grid-template-columns:1fr 1fr; gap:22px;}
+  .chart-card{
+    background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:22px 22px 12px;
     position:relative;
   }
-  .card::before{
-    content:"";position:absolute; inset:10px;
-    border:1px dashed rgba(11,31,51,0.15);
-    border-radius:4px; pointer-events:none;
+  .chart-card::before{
+    content:attr(data-tag); position:absolute; top:14px; right:16px; font-family:'IBM Plex Mono',monospace;
+    font-size:10px; color:var(--green-dim); letter-spacing:0.1em;
   }
-  label{display:block; font-weight:700; font-size:13px; text-transform:uppercase; letter-spacing:0.6px; margin-bottom:8px; color:#4a3f28;}
-  .hint{font-size:12.5px;color:#6b6047; margin-top:6px; line-height:1.5;}
+  .chart-card h3{font-size:15px; margin:0 0 4px; color:var(--ink); text-transform:none; letter-spacing:0; font-family:'IBM Plex Sans'; font-weight:600;}
+  .chart-card .q-full{font-size:11.5px; color:var(--ink-dim); margin-bottom:14px; font-family:'IBM Plex Mono',monospace;}
+  .chart-card canvas{max-height:260px;}
+  .chart-card.full{grid-column:1 / -1;}
+  .note{font-size:11.5px; color:var(--ink-dim); font-family:'IBM Plex Mono',monospace; margin-top:10px;}
 
-  .drop{
-    border:2px dashed rgba(11,31,51,0.3);
-    border-radius:6px; padding:28px; text-align:center; cursor:pointer;
-    transition:.15s; background:rgba(255,255,255,0.35);
+  .quotes-box{background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:24px 26px;}
+  .quotes-box h3{font-size:15px; text-transform:none; letter-spacing:0; font-weight:600; margin-top:0; font-family:'IBM Plex Sans';}
+  .quote{
+    border-left:2px solid var(--green-dim); padding:8px 0 8px 16px; margin:14px 0; color:var(--ink); font-size:14px; line-height:1.6; font-style:italic;
   }
-  .drop:hover, .drop.drag{border-color:var(--brass); background:rgba(184,145,47,0.08);}
-  .drop input{display:none;}
-  .drop .fname{font-family:'JetBrains Mono',monospace; font-size:13px; margin-top:8px; color:var(--navy);}
+  .quote span{display:block; font-style:normal; font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:var(--ink-dim); margin-top:4px;}
 
-  select, input[type=text], input[type=password]{
-    width:100%; padding:11px 13px; border-radius:4px;
-    border:1.5px solid rgba(11,31,51,0.25); background:#fbf9f2;
-    font-family:'JetBrains Mono',monospace; font-size:13.5px; color:var(--ink);
+  /* RESEARCH */
+  .parts-nav{display:flex; gap:10px; flex-wrap:wrap; margin-bottom:40px;}
+  .parts-nav a{
+    font-family:'IBM Plex Mono',monospace; font-size:12px; padding:8px 14px; border:1px solid var(--line);
+    border-radius:20px; color:var(--ink-dim); text-decoration:none; transition:.2s;
   }
-  select:focus, input:focus{outline:2px solid var(--brass); outline-offset:1px;}
+  .parts-nav a:hover{border-color:var(--green-dim); color:var(--green);}
 
-  .row{margin-bottom:20px;}
-  .btn{
-    font-family:'Inter',sans-serif; font-weight:700; font-size:14px;
-    background:var(--red); color:#fff8ee; border:none; border-radius:4px;
-    padding:13px 22px; cursor:pointer; letter-spacing:0.3px;
-    transition:.15s; box-shadow:0 4px 0 #7a2c21;
+  .part{margin-bottom:64px;}
+  .part-head{
+    display:flex; align-items:baseline; gap:16px; border-bottom:1px solid var(--line); padding-bottom:14px; margin-bottom:28px;
   }
-  .btn:hover:not(:disabled){transform:translateY(-1px);}
-  .btn:active:not(:disabled){transform:translateY(2px); box-shadow:0 2px 0 #7a2c21;}
-  .btn:disabled{opacity:.5; cursor:not-allowed;}
-  .btn.secondary{background:var(--navy); box-shadow:0 4px 0 #061420;}
+  .part-num{font-family:'Rajdhani',sans-serif; font-weight:700; font-size:2.6rem; color:var(--green); line-height:1;}
+  .part-head h2{margin:0; font-size:clamp(1.2rem,2.4vw,1.7rem); color:#F4F8FC;}
 
-  .log{
-    margin-top:22px; background:var(--navy-2); color:#d8e6f0;
-    border-radius:5px; padding:14px 16px; font-family:'JetBrains Mono',monospace;
-    font-size:12.5px; max-height:260px; overflow-y:auto; display:none;
+  .entry{margin-bottom:28px; padding-left:18px; border-left:1px solid var(--line);}
+  .entry h4{margin:0 0 8px; font-size:16px; color:var(--ink); font-family:'IBM Plex Sans'; font-weight:600; letter-spacing:0;}
+  .entry p{color:#C7D0DE; line-height:1.75; font-size:14.5px; margin:0 0 10px;}
+  .entry .src{font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:var(--ink-dim);}
+  .entry .src a{color:var(--amber); word-break:break-all;}
+  .conclusion-box{
+    background:var(--panel-2); border-left:3px solid var(--amber); border-radius:4px; padding:20px 22px; margin-top:26px;
   }
-  .log.show{display:block;}
-  .log .ln{padding:3px 0; border-bottom:1px solid rgba(255,255,255,0.06); display:flex; gap:8px;}
-  .log .ln .tag{color:var(--brass-2); flex:none;}
-  .log .ln.err .tag{color:#ff8a75;}
-  .log .ln.ok .tag{color:#7fd9a0;}
+  .conclusion-box h4{margin-top:0; color:var(--amber); font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.1em; text-transform:uppercase;}
+  .conclusion-box p{color:#DCE3ED; font-size:14.5px; line-height:1.75; margin:0;}
 
-  .bar{height:6px; background:rgba(11,31,51,0.12); border-radius:3px; overflow:hidden; margin-top:16px; display:none;}
-  .bar.show{display:block;}
-  .bar > div{height:100%; width:0%; background:linear-gradient(90deg, var(--brass), var(--red)); transition:width .3s;}
-
-  .download{
-    margin-top:20px; display:none; align-items:center; gap:12px;
-    background:#fff8ee; border:1.5px solid var(--brass); border-radius:5px; padding:14px 16px;
+  footer{
+    border-top:1px solid var(--line); padding:38px 24px; text-align:center;
+    color:var(--ink-dim); font-family:'IBM Plex Mono',monospace; font-size:12px;
   }
-  .download.show{display:flex;}
-  .download .info{flex:1; font-size:13px; color:#4a3f28;}
-  .download .info b{display:block; font-family:'JetBrains Mono',monospace; font-size:13.5px; color:var(--navy); margin-bottom:2px;}
 
-  .key-status{font-size:12.5px; margin-top:8px; font-family:'JetBrains Mono',monospace;}
-  .key-status.ok{color:#2f7a4a;}
-  .key-status.warn{color:var(--red);}
-
-  footer{margin-top:34px; text-align:center; font-size:12px; color:#8a7f63;}
-  footer a{color:var(--brass-2);}
+  @media (max-width:820px){
+    .stat-strip{grid-template-columns:1fr 1fr;}
+    .chart-grid{grid-template-columns:1fr;}
+    nav.top-nav{display:none;}
+  }
 </style>
 </head>
 <body>
-<div class="wrap">
-  <header>
-    <div style="display:flex; gap:16px;">
-      <div class="brand-mark">BQ</div>
-      <div>
-        <h1>Banco de Questões Automática</h1>
-        <p>Converte provas antigas em PDF para DOCX editável. Onde havia figura, o documento traz a palavra <b>IMAGEM</b> no lugar — pronto para você inserir o arquivo depois. Também edita DOCX direto no site.</p>
-      </div>
-    </div>
-    <div class="stamp">USO DE IA<br>via OpenRouter</div>
-  </header>
+<div class="gridbg"></div>
+<div class="scanlines"></div>
 
-  <div class="tabs">
-    <button class="tab-btn active" data-tab="converter">Converter</button>
-    <button class="tab-btn" data-tab="editar">Editar DOCX</button>
-    <button class="tab-btn" data-tab="config">Configurações</button>
+<header class="top">
+  <div class="brand"><div class="dot"></div><span>TCF · DEFESA AÉREA</span></div>
+  <nav class="top-nav">
+    <a href="#estatisticas">Estatísticas</a>
+    <a href="#pesquisa">Pesquisa</a>
+  </nav>
+</header>
+
+<section class="hero">
+  <div class="radar-wrap">
+    <div class="radar-ring" style="width:100%;height:100%;"></div>
+    <div class="radar-ring" style="width:72%;height:72%;"></div>
+    <div class="radar-ring" style="width:44%;height:44%;"></div>
+    <div class="radar-ring" style="width:18%;height:18%;"></div>
+    <div class="radar-sweep"></div>
+    <div class="blip" style="top:28%; left:64%; animation-delay:0.4s;"></div>
+    <div class="blip" style="top:66%; left:32%; animation-delay:1.8s;"></div>
+    <div class="blip" style="top:44%; left:18%; animation-delay:2.6s;"></div>
+  </div>
+  <div class="eyebrow">RELATÓRIO DE PESQUISA · TCF</div>
+  <h1 class="title">Tecnologia contribuinte para os <em>avanços militares</em> na defesa do espaço aéreo</h1>
+  <p class="subtitle">Compilação de conceitos, evolução tecnológica, transferência para o uso civil e o caso brasileiro — cruzada com uma pesquisa de campo sobre o que jovens sabem e pensam sobre o tema.</p>
+  <div class="cta-row">
+    <a href="#estatisticas" class="btn solid">Ver estatísticas</a>
+    <a href="#pesquisa" class="btn">Ler a pesquisa completa</a>
+  </div>
+  <div class="hero-meta">
+    <div><b>43</b>respostas coletadas</div>
+    <div><b>4</b>partes da pesquisa</div>
+    <div><b>9</b>perguntas de campo</div>
+    <div><b>8</b>fontes públicas citadas</div>
+  </div>
+</section>
+
+<!-- ================= ESTATÍSTICAS ================= -->
+<section id="estatisticas">
+  <div class="section-head">
+    <span class="eyebrow2">// PAINEL 01</span>
+    <h2>O que os participantes da pesquisa responderam</h2>
+    <p>Dados coletados por formulário com 43 participantes, majoritariamente adolescentes entre 11 e 17 anos, sobre percepção de tecnologia militar e defesa aeroespacial.</p>
   </div>
 
-  <!-- CONVERTER -->
-  <section class="panel active" id="tab-converter">
-    <div class="card">
-      <div class="row">
-        <label>1. Prova em PDF</label>
-        <div class="drop" id="drop">
-          <input type="file" id="fileInput" accept="application/pdf">
-          <div>Arraste o PDF aqui ou clique para escolher</div>
-          <div class="fname" id="fname"></div>
-        </div>
-      </div>
+  <div class="stat-strip">
+    <div class="stat-cell"><div class="num">67%</div><div class="lbl">conhecem ou já ouviram falar de defesa do espaço aéreo</div></div>
+    <div class="stat-cell"><div class="num">95%</div><div class="lbl">acreditam que investimentos militares trazem avanços tecnológicos</div></div>
+    <div class="stat-cell"><div class="num">51%</div><div class="lbl">apontam a Internet como a maior herança militar na vida civil</div></div>
+    <div class="stat-cell"><div class="num">91%</div><div class="lbl">querem aprender mais sobre tecnologias militares e aeroespaciais</div></div>
+  </div>
 
-      <div class="row">
-        <label>2. Modelo de IA (com visão)</label>
-        <input list="models" type="text" id="modelInput" value="google/gemini-2.5-flash" placeholder="ex: google/gemini-2.5-flash">
-        <datalist id="models">
-          <option value="google/gemini-2.5-flash">
-          <option value="google/gemini-2.5-pro">
-          <option value="openai/gpt-4o">
-          <option value="openai/gpt-4o-mini">
-          <option value="anthropic/claude-3.5-sonnet">
-          <option value="qwen/qwen2.5-vl-72b-instruct">
-        </datalist>
-        <div class="hint">Precisa ser um modelo com suporte a imagem (visão) disponível na sua conta OpenRouter.</div>
-      </div>
+  <div class="chart-grid">
 
-      <button class="btn" id="convertBtn">Converter para DOCX</button>
-
-      <div class="bar" id="bar"><div id="barFill"></div></div>
-      <div class="log" id="log"></div>
-
-      <div class="download" id="download">
-        <div class="info"><b id="dlName">prova_convertida.docx</b>Documento Word gerado localmente no seu navegador.</div>
-        <button class="btn secondary" id="dlBtn">Baixar .docx</button>
-      </div>
+    <div class="chart-card" data-tag="Q1">
+      <h3>Faixa etária dos respondentes</h3>
+      <div class="q-full">"Quantos anos você tem?"</div>
+      <canvas id="chartAge"></canvas>
+      <div class="note">* 2 respostas (1 e 67 anos) foram tratadas como atípicas e excluídas deste gráfico.</div>
     </div>
-  </section>
 
-  <!-- EDITAR -->
-  <section class="panel" id="tab-editar">
-    <div class="card">
-      <div class="row">
-        <label>1. Abrir um .docx</label>
-        <div class="drop" id="dropDocx">
-          <input type="file" id="docxInput" accept=".docx">
-          <div>Arraste um .docx aqui ou clique para escolher</div>
-          <div class="fname" id="docxFname"></div>
-        </div>
-        <div class="hint">
-          Extrai o texto por parágrafo para edição. Formatação complexa (imagens embutidas, colunas, tabelas) não é preservada — funciona melhor com documentos de texto corrido, como os gerados na aba Converter.
-          <br>Já converteu algo nesta sessão? <button class="btn secondary" id="loadLastBtn" style="padding:6px 12px; font-size:12px; margin-top:8px;">Carregar último documento gerado</button>
-        </div>
-      </div>
-
-      <div class="row">
-        <label>2. Conteúdo (um parágrafo por linha)</label>
-        <textarea id="editBox" rows="16" style="width:100%; padding:12px 14px; border-radius:4px; border:1.5px solid rgba(11,31,51,0.25); background:#fbf9f2; font-family:'JetBrains Mono',monospace; font-size:13px; color:var(--ink); line-height:1.6;" placeholder="Abra um .docx acima para editar o texto aqui..."></textarea>
-        <div class="hint">Uma linha em branco vira um parágrafo vazio. Uma linha só com <b>IMAGEM</b> continua sendo formatada como marcador de imagem ao salvar.</div>
-      </div>
-
-      <div class="row">
-        <label>3. Nome do arquivo ao salvar</label>
-        <input type="text" id="editTitle" value="documento_editado">
-      </div>
-
-      <button class="btn" id="saveDocxBtn">Salvar como .docx</button>
-
-      <div class="download" id="downloadEdit">
-        <div class="info"><b id="dlEditName">documento_editado.docx</b>Documento Word gerado localmente no seu navegador.</div>
-        <button class="btn secondary" id="dlEditBtn">Baixar .docx</button>
-      </div>
+    <div class="chart-card" data-tag="Q2">
+      <h3>Conhecimento sobre defesa do espaço aéreo</h3>
+      <div class="q-full">"Você sabe o que significa defesa do espaço aéreo?"</div>
+      <canvas id="chartQ2"></canvas>
     </div>
-  </section>
 
-  <!-- CONFIG -->
-  <section class="panel" id="tab-config">
-    <div class="card">
-      <div class="row">
-        <label>Chave da API OpenRouter</label>
-        <input type="password" id="apiKey" placeholder="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">
-        <div class="hint">A chave fica apenas na memória desta página — some ao recarregar. Crie a sua em
-          <a href="https://openrouter.ai/keys" target="_blank" style="color:#a63d2f;">openrouter.ai/keys</a>.
-          Esta é uma ferramenta que roda 100% no seu navegador: cada requisição vai direto do seu computador para a OpenRouter.
-        </div>
-        <div class="key-status" id="keyStatus"></div>
-      </div>
-      <div class="row" style="margin-bottom:0;">
-        <label>Instrução enviada à IA por página</label>
-        <textarea id="promptBox" rows="6" style="width:100%; padding:11px 13px; border-radius:4px; border:1.5px solid rgba(11,31,51,0.25); background:#fbf9f2; font-family:'JetBrains Mono',monospace; font-size:12.5px; color:var(--ink);"></textarea>
-        <div class="hint">Pode editar o texto acima se quiser mudar o comportamento da transcrição (mantenha a instrução de trocar imagens pela palavra IMAGEM).</div>
-      </div>
+    <div class="chart-card" data-tag="Q3">
+      <h3>Tecnologia associada à defesa aérea</h3>
+      <div class="q-full">"Qual dessas tecnologias você acredita que é utilizada na defesa aérea?"</div>
+      <canvas id="chartQ3"></canvas>
     </div>
-  </section>
 
-  <footer>Feito para digitalizar provas antigas • os arquivos PDF não saem do seu navegador, exceto as imagens de página enviadas ao modelo escolhido.</footer>
-</div>
+    <div class="chart-card" data-tag="Q4">
+      <h3>Origem militar do GPS</h3>
+      <div class="q-full">"Você sabia que o GPS surgiu originalmente para fins militares?"</div>
+      <canvas id="chartQ4"></canvas>
+    </div>
+
+    <div class="chart-card" data-tag="Q5">
+      <h3>Investimento militar → avanço tecnológico</h3>
+      <div class="q-full">"Você acredita que investimentos militares contribuem para avanços tecnológicos da sociedade?"</div>
+      <canvas id="chartQ5"></canvas>
+    </div>
+
+    <div class="chart-card" data-tag="Q6">
+      <h3>Tecnologia com maior impacto civil</h3>
+      <div class="q-full">"Qual tecnologia militar você acredita ter maior impacto na vida civil?"</div>
+      <canvas id="chartQ6"></canvas>
+    </div>
+
+    <div class="chart-card" data-tag="Q7">
+      <h3>Instituições da FAB conhecidas</h3>
+      <div class="q-full">"Você conhece alguma instituição da Força Aérea Brasileira voltada para formação e tecnologia?"</div>
+      <canvas id="chartQ7"></canvas>
+    </div>
+
+    <div class="chart-card" data-tag="Q9">
+      <h3>Interesse em aprender mais</h3>
+      <div class="q-full">"Você gostaria de aprender mais sobre tecnologias militares e aeroespaciais?"</div>
+      <canvas id="chartQ9"></canvas>
+    </div>
+
+    <div class="chart-card full" data-tag="Q8 · RESPOSTAS ABERTAS">
+      <h3>Importância da modernização tecnológica para a defesa do país</h3>
+      <div class="q-full">31 de 43 participantes responderam livremente; alguns trechos representativos:</div>
+      <div class="quotes-box" style="border:none; background:transparent; padding:0;">
+        <div class="quote">"A modernização tecnológica é crucial para garantir a soberania nacional e a defesa das nossas fronteiras e infraestruturas críticas contra ameaças modernas, incluindo os ataques cibernéticos."</div>
+        <div class="quote">"Garantir a soberania do país sobre seu próprio território. Porém, no caso do Brasil, não é prioridade, pois ele não participa de conflitos recorrentes ou possui tensões militares."</div>
+        <div class="quote">"A modernização tecnológica é o que separa hoje um país que consegue se defender sozinho de um país que depende de outros para se defender."</div>
+        <div class="quote">"Segurança e prevenção a invasões internacionais. Ajuda também a manter igualdade entre grandes nações, pois todas que se prezam têm grande poder aéreo/militar geral."</div>
+      </div>
+      <div class="note" style="margin-top:16px;">28% não respondeu a esta pergunta aberta; 5% declarou "não sei" — as demais respostas convergem em torno de soberania nacional, proteção de fronteiras e capacidade de resposta das Forças Armadas.</div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ================= PESQUISA ================= -->
+<section id="pesquisa">
+  <div class="section-head">
+    <span class="eyebrow2">// DOSSIÊ 02</span>
+    <h2>Pesquisa completa</h2>
+    <p>Documento organizado a partir de fontes públicas — Ministério da Defesa, DARPA, OTAN, DECEA, FAB, Wikipédia, G1 e GPS.gov.</p>
+  </div>
+
+  <div class="parts-nav">
+    <a href="#parte1">Parte I — Conceito e Evolução</a>
+    <a href="#parte2">Parte II — IA Aplicada à Defesa</a>
+    <a href="#parte3">Parte III — Transferência Militar-Civil</a>
+    <a href="#parte4">Parte IV — Defesa Aeroespacial Brasileira</a>
+  </div>
+
+  <!-- PARTE I -->
+  <div class="part" id="parte1">
+    <div class="part-head"><div class="part-num">I</div><h2>Conceito de Tecnologia Militar e Evolução das Tecnologias de Defesa</h2></div>
+
+    <div class="entry">
+      <h4>1. Conceito de tecnologia militar</h4>
+      <p>Tecnologia militar é o conjunto de conhecimentos científicos, técnicas, sistemas e equipamentos desenvolvidos ou adaptados para atender às necessidades de defesa de um país. Ela envolve áreas como computação, engenharia, telecomunicações, sensores, tecnologia espacial, inteligência artificial e sistemas autônomos.</p>
+      <p>Atualmente, a tecnologia militar não depende apenas de equipamentos físicos. A capacidade de coletar, processar e compartilhar informações rapidamente tornou-se fundamental para a defesa moderna.</p>
+      <div class="src">Fonte: Ministério da Defesa — Ciência e Tecnologia · <a href="https://www.gov.br/defesa/pt-br/assuntos/industria-de-defesa/ciencia-e-tecnologia/ciencia-e-tecnologia" target="_blank">gov.br/defesa</a></div>
+    </div>
+
+    <div class="entry">
+      <h4>2. Revolução Industrial</h4>
+      <p>A Revolução Industrial foi um dos momentos mais importantes para a evolução das tecnologias de defesa. A mecanização e a produção em larga escala permitiram fabricar equipamentos de maneira mais rápida e padronizada.</p>
+      <p>Além disso, o desenvolvimento das ferrovias, motores, navios e sistemas de comunicação transformou a logística e a capacidade de mobilização dos Estados. A capacidade industrial passou a ser um componente essencial do poder militar.</p>
+      <div class="src">Fonte: Ministério da Defesa — Indústria de Defesa · <a href="https://www.gov.br/defesa/pt-br/assuntos/industria-de-defesa" target="_blank">gov.br/defesa</a></div>
+    </div>
+
+    <div class="entry">
+      <h4>3. Radar e eletrônica</h4>
+      <p>Durante a primeira metade do século XX, especialmente na Segunda Guerra Mundial, o desenvolvimento do radar provocou uma grande mudança na defesa. O radar permitiu detectar objetos a distância e obter informações sobre sua posição, tornando-se fundamental para vigilância e alerta.</p>
+      <p>Isso marcou uma mudança importante: a defesa passou a depender cada vez mais de sensores e informações, e não apenas da capacidade física dos equipamentos.</p>
+      <div class="src">Fonte: U.S. Naval History and Heritage Command — Radar and Sonar · <a href="https://www.history.navy.mil/content/history/nhhc/browse-by-topic/exploration-and-innovation/radar-sonar.html" target="_blank">history.navy.mil</a></div>
+    </div>
+
+    <div class="entry">
+      <h4>4. Tecnologia nuclear e espacial</h4>
+      <p>Após a Segunda Guerra Mundial, a tecnologia nuclear e a corrida espacial transformaram profundamente a área de defesa. Durante a Guerra Fria, Estados Unidos e União Soviética investiram intensamente em satélites, computação, comunicação e sistemas de navegação.</p>
+      <p>Um exemplo importante foi o Transit, sistema de navegação por satélite desenvolvido inicialmente para fins militares, cujos avanços contribuíram posteriormente para a evolução dos sistemas modernos de navegação por satélite, incluindo o GPS. O espaço passou a ser importante para comunicação, navegação, observação e obtenção de informações.</p>
+      <div class="src">Fonte: DARPA — Transit Satellite · <a href="https://www.darpa.mil/about/innovation-timeline/transit-satellite-space-based-navigation" target="_blank">darpa.mil</a></div>
+    </div>
+
+    <div class="entry">
+      <h4>5. Computação e Era da Informação</h4>
+      <p>A partir da segunda metade do século XX, os computadores passaram a ocupar um papel cada vez mais importante na defesa. O processamento digital permitiu analisar grandes quantidades de informações, integrar sensores, melhorar comunicações e auxiliar na tomada de decisões.</p>
+      <p>O desenvolvimento de receptores GPS menores é um exemplo de como tecnologias originalmente voltadas à defesa foram sendo miniaturizadas e posteriormente incorporadas a inúmeras aplicações civis.</p>
+      <div class="src">Fonte: DARPA — Miniaturized GPS Receivers · <a href="https://www.darpa.mil/about/innovation-timeline/miniaturized-gps-receivers" target="_blank">darpa.mil</a></div>
+    </div>
+
+    <div class="entry">
+      <h4>6. Tecnologias mais recentes</h4>
+      <p>No século XXI, a evolução mais importante está relacionada à digitalização e à automação. Entre as tecnologias que atualmente mais impactam a defesa estão: inteligência artificial, sistemas autônomos, robótica, cibersegurança, tecnologia espacial, computação e tecnologias quânticas, sensores avançados e redes de comunicação avançadas.</p>
+      <p>A OTAN considera inteligência artificial, autonomia, tecnologias quânticas, espaço, novos materiais, energia e redes de comunicação de próxima geração algumas das tecnologias emergentes com maior potencial de impacto sobre a segurança.</p>
+      <div class="src">Fonte: OTAN — Emerging and Disruptive Technologies · <a href="https://www.nato.int/en/what-we-do/deterrence-and-defence/emerging-and-disruptive-technologies" target="_blank">nato.int</a></div>
+    </div>
+
+    <div class="entry">
+      <h4>7. Inteligência artificial e autonomia</h4>
+      <p>A IA permite analisar rapidamente enormes quantidades de dados e auxiliar na identificação de padrões. Combinada com sistemas autônomos, também pode permitir que máquinas realizem determinadas tarefas com menor intervenção humana.</p>
+      <p>A OTAN atualizou sua estratégia de inteligência artificial em 2024 e estabeleceu princípios para seu uso responsável, incluindo legalidade, responsabilidade, explicabilidade, confiabilidade e governabilidade.</p>
+      <div class="src">Fonte: OTAN — Estratégia de Inteligência Artificial · <a href="https://www.nato.int/en/about-us/official-texts-and-resources/official-texts/2024/07/10/summary-of-natos-revised-artificial-intelligence-ai-strategy" target="_blank">nato.int</a></div>
+    </div>
+
+    <div class="conclusion-box">
+      <h4>Conclusão da Parte I</h4>
+      <p>A evolução da tecnologia militar pode ser resumida em grandes transformações: industrialização → eletrônica e radar → tecnologia nuclear e espacial → computação → sistemas digitais → inteligência artificial e autonomia. No passado, a vantagem tecnológica estava relacionada à capacidade de produzir equipamentos mais resistentes ou poderosos; hoje, está cada vez mais ligada à capacidade de obter e processar informações, conectar sistemas e utilizar IA e automação. As tecnologias mais importantes para o futuro da defesa não são equipamentos isolados, mas sistemas integrados de IA, sensores, computação, comunicação, espaço, autonomia e cibersegurança.</p>
+    </div>
+  </div>
+
+  <!-- PARTE II -->
+  <div class="part" id="parte2">
+    <div class="part-head"><div class="part-num">II</div><h2>Inteligência Artificial Aplicada à Defesa e Pesquisa Científica Voltada à Inovação</h2></div>
+
+    <div class="entry">
+      <h4>1. Inteligência artificial aplicada à defesa</h4>
+      <p>A IA é uma das tecnologias que mais está transformando a área de defesa, permitindo analisar grandes quantidades de dados, identificar padrões, auxiliar na tomada de decisões, automatizar processos e melhorar a capacidade de reconhecimento e monitoramento.</p>
+      <p>A OTAN considera a IA uma das principais tecnologias emergentes para a defesa e afirma que sua combinação com dados, computação e sistemas autônomos pode transformar as capacidades militares.</p>
+      <div class="src">Fonte: OTAN — Innovation and Technology Adoption · <a href="https://www.nato.int/en/what-we-do/deterrence-and-defence/emerging-and-disruptive-technologies" target="_blank">nato.int</a></div>
+    </div>
+
+    <div class="entry">
+      <h4>2. IA e tomada de decisões</h4>
+      <p>Sistemas de IA podem processar informações em alta velocidade e apresentar padrões difíceis de identificar manualmente, aumentando a velocidade e a qualidade das decisões quando há grande volume de dados provenientes de diferentes sensores e sistemas.</p>
+      <p>A DARPA desenvolve pesquisas voltadas para sistemas de IA mais confiáveis, robustos e capazes de auxiliar seres humanos em situações complexas.</p>
+      <div class="src">Fonte: DARPA — AI Forge · <a href="https://www.darpa.mil/research/programs/ai-forge" target="_blank">darpa.mil</a></div>
+    </div>
+
+    <div class="entry">
+      <h4>3. Sistemas autônomos e robótica</h4>
+      <p>A IA também está relacionada ao desenvolvimento de sistemas autônomos, capazes de perceber o ambiente, processar informações e executar tarefas com diferentes níveis de intervenção humana.</p>
+      <p>A DARPA pesquisa tecnologias de autonomia e cooperação entre sistemas, além da integração entre seres humanos e máquinas, buscando melhorar o funcionamento em ambientes complexos e imprevisíveis.</p>
+      <div class="src">Fonte: DARPA — Artificial Intelligence Reinforcements (AIR) · <a href="https://www.darpa.mil/research/programs/artificial-intelligence-reinforcements" target="_blank">darpa.mil</a></div>
+    </div>
+
+    <div class="entry">
+      <h4>4. IA responsável e explicável</h4>
+      <p>Um dos grandes desafios é garantir que os sistemas sejam confiáveis e que suas decisões possam ser avaliadas por humanos. A DARPA desenvolveu pesquisas de Explainable AI (XAI) para permitir compreender melhor como sistemas de IA chegam a seus resultados.</p>
+      <p>A OTAN também estabeleceu princípios para o uso responsável da IA: legalidade, responsabilidade, explicabilidade, confiabilidade, governabilidade e redução de vieses.</p>
+      <div class="src">Fonte: DARPA — Explainable Artificial Intelligence · <a href="https://www.darpa.mil/research/programs/explainable-artificial-intelligence" target="_blank">darpa.mil</a> · OTAN — Revised AI Strategy · <a href="https://www.nato.int/en/about-us/official-texts-and-resources/official-texts/2024/07/10/summary-of-natos-revised-artificial-intelligence-ai-strategy" target="_blank">nato.int</a></div>
+    </div>
+
+    <div class="entry">
+      <h4>5. Segurança da inteligência artificial</h4>
+      <p>Quanto mais a IA é utilizada em sistemas importantes, maior a necessidade de protegê-la contra erros, manipulação e ataques. Pesquisas atuais estudam como sistemas de IA podem ser enganados ao receber dados manipulados.</p>
+      <p>A DARPA possui o programa SABER, voltado à avaliação da segurança e resistência de sistemas de IA usados em ambientes de defesa.</p>
+      <div class="src">Fonte: DARPA — SABER · <a href="https://www.darpa.mil/research/programs/saber-securing-artificial-intelligence" target="_blank">darpa.mil</a></div>
+    </div>
+
+    <div class="entry">
+      <h4>6. Pesquisa científica voltada à inovação</h4>
+      <p>A pesquisa científica é fundamental para transformar novas descobertas em tecnologias úteis. Governos, universidades, centros de pesquisa e empresas trabalham juntos para desenvolver tecnologias ainda não completamente maduras.</p>
+      <p>O programa AI Forge, da DARPA com a National Science Foundation, busca aproximar universidades, empresas de IA e governo para pesquisas em interpretação de IA, controle e resistência a ataques.</p>
+      <div class="src">Fonte: DARPA — AI Forge · <a href="https://www.darpa.mil/news/2026/ai-forge-accelerating-ai-breakthroughs-national-security" target="_blank">darpa.mil</a></div>
+    </div>
+
+    <div class="entry">
+      <h4>7. Integração entre universidades, empresas e governo</h4>
+      <p>Universidades contribuem com pesquisa científica e formação de profissionais; empresas, com desenvolvimento tecnológico e capacidade de produção; governos e instituições de defesa identificam necessidades estratégicas e financiam pesquisas.</p>
+      <p>A OTAN utiliza esse modelo, conectando governos, universidades, empresas e ecossistemas de inovação para acelerar o desenvolvimento e a adoção de novas tecnologias.</p>
+      <div class="src">Fonte: OTAN — Innovation and Technology Adoption · <a href="https://www.nato.int/en/what-we-do/deterrence-and-defence/emerging-and-disruptive-technologies" target="_blank">nato.int</a></div>
+    </div>
+
+    <div class="entry">
+      <h4>8. Novas áreas de pesquisa</h4>
+      <p>Além da IA, áreas estratégicas incluem sistemas autônomos, tecnologias quânticas, tecnologia espacial, biotecnologia, novos materiais, energia e propulsão, redes de comunicação de próxima geração e cibersegurança.</p>
+      <p>A OTAN trabalha atualmente com nove áreas prioritárias de tecnologias emergentes e disruptivas.</p>
+      <div class="src">Fonte: OTAN — Emerging and Disruptive Technologies · <a href="https://www.nato.int/en/what-we-do/deterrence-and-defence/emerging-and-disruptive-technologies" target="_blank">nato.int</a></div>
+    </div>
+
+    <div class="entry">
+      <h4>9. O futuro da IA na defesa</h4>
+      <p>A tendência é que a IA deixe de ser uma ferramenta isolada e passe a funcionar integrada a diversos sistemas, colaborando com humanos e adaptando-se a diferentes situações.</p>
+      <p>Em 2026, a DARPA lançou o programa AI Forge para acelerar pesquisas em IA confiável, previsível, interpretável e segura para aplicações de segurança nacional.</p>
+      <div class="src">Fonte: DARPA — AI Forge · <a href="https://www.darpa.mil/news/2026/ai-forge-accelerating-ai-breakthroughs-national-security" target="_blank">darpa.mil</a></div>
+    </div>
+
+    <div class="conclusion-box">
+      <h4>Conclusão da Parte II</h4>
+      <p>A Inteligência Artificial tornou-se uma das principais áreas de inovação tecnológica para a defesa, com impacto no processamento de informações, apoio a decisões, automação de tarefas e integração de sistemas. Ao mesmo tempo, a pesquisa científica é essencial para resolver desafios de confiabilidade, segurança, explicabilidade e proteção contra manipulação. O desenvolvimento da IA aplicada à defesa depende da união entre ciência, tecnologia, universidades, empresas e governos, com o objetivo de criar tecnologias confiáveis para as necessidades futuras de segurança.</p>
+    </div>
+  </div>
+
+  <!-- PARTE III -->
+  <div class="part" id="parte3">
+    <div class="part-head"><div class="part-num">III</div><h2>Transferência de Tecnologias Militares para Uso Civil e seus Impactos Sociais e Econômicos</h2></div>
+
+    <div class="entry">
+      <h4>1. O que é transferência de tecnologia militar</h4>
+      <p>Ocorre quando conhecimentos, pesquisas, equipamentos ou processos desenvolvidos para a defesa passam a ser usados em aplicações civis, por meio de pesquisas conjuntas, licenciamento, criação de empresas, parcerias universidade-indústria ou adaptação de tecnologias militares para o mercado civil.</p>
+      <div class="src">Fonte: Ministério da Defesa — Política de Ciência, Tecnologia e Inovação de Defesa · <a href="https://mdlegis.defesa.gov.br/norma_html/?ANO=2021&NUM=3063&SER=A" target="_blank">mdlegis.defesa.gov.br</a></div>
+    </div>
+
+    <div class="entry">
+      <h4>2. GPS: um dos maiores exemplos</h4>
+      <p>Desenvolvido originalmente com forte participação do setor de defesa dos Estados Unidos, o GPS passou a ser usado amplamente pela população civil — presente em celulares, carros, aviões, transporte, agricultura, logística e mapas. Sua popularização criou novos serviços e empresas e mudou a forma como as pessoas se deslocam, trabalham e se comunicam.</p>
+      <div class="src">Fonte: GPS.gov — Policies and Documentation · <a href="https://www.gps.gov/policies-and-documentation" target="_blank">gps.gov</a></div>
+    </div>
+
+    <div class="entry">
+      <h4>3. Internet e tecnologias digitais</h4>
+      <p>A DARPA desenvolveu e financiou pesquisas que contribuíram para tecnologias fundamentais de redes de computadores, ajudando a formar a infraestrutura que possibilitou a expansão da internet — que provocou transformações sociais e econômicas: comunicação instantânea, comércio eletrônico, redes sociais, serviços digitais, ensino a distância e novas formas de trabalho.</p>
+      <div class="src">Fonte: DARPA — About DARPA · <a href="https://www.darpa.mil/About/" target="_blank">darpa.mil</a></div>
+    </div>
+
+    <div class="entry">
+      <h4>4. Impactos econômicos</h4>
+      <p>A transferência de tecnologias militares pode estimular a economia ao criar novos produtos, empresas e setores industriais. No Brasil, o Ministério da Defesa destaca que investimentos na indústria de defesa contribuem para inovação, geração de empregos qualificados, desenvolvimento industrial e aumento da capacidade tecnológica.</p>
+      <div class="src">Fonte: MDIC — Base Industrial de Defesa · <a href="https://www.gov.br/mdic/pt-br/composicao/sdic/dial/aeroespacial-defesa-e-nuclear/setor-de-defesa" target="_blank">gov.br/mdic</a></div>
+    </div>
+
+    <div class="entry">
+      <h4>5. Geração de empregos e qualificação profissional</h4>
+      <p>Tecnologias de alta complexidade exigem profissionais especializados — engenheiros, programadores, pesquisadores e técnicos. O Ministério da Defesa destaca a geração de empregos e a elevação da qualificação profissional em engenharia aeronáutica, construção naval, eletrônica e TI como benefícios da indústria de defesa.</p>
+      <div class="src">Fonte: Ministério da Defesa — PAED: benefícios para o país · <a href="https://www.gov.br/defesa/pt-br/assuntos/industria-de-defesa/paed/beneficios-do-paed-para-o-pais" target="_blank">gov.br/defesa</a></div>
+    </div>
+
+    <div class="entry">
+      <h4>6. Impactos sociais</h4>
+      <p>Tecnologias transferidas para o setor civil modificam diretamente a vida da população: o GPS facilita localização e transporte; tecnologias de comunicação conectam pessoas em diferentes regiões; sensores e processamento de dados chegam à agricultura, transporte e serviços públicos.</p>
+      <div class="src">Fonte: DARPA — About DARPA · <a href="https://www.darpa.mil/About/" target="_blank">darpa.mil</a></div>
+    </div>
+
+    <div class="entry">
+      <h4>7. Transferência de tecnologia no Brasil</h4>
+      <p>O Ministério da Defesa possui políticas voltadas à transferência de tecnologia, ao licenciamento de criações e à interação entre instituições de pesquisa, universidades e empresas. A Política de Propriedade Intelectual do Ministério da Defesa incentiva o licenciamento e a transferência de tecnologias desenvolvidas por instituições científicas ligadas à Defesa.</p>
+      <div class="src">Fonte: Ministério da Defesa — Política de Propriedade Intelectual · <a href="https://mdlegis.defesa.gov.br/norma_html/?ANO=2021&NUM=3439&SER=A" target="_blank">mdlegis.defesa.gov.br</a></div>
+    </div>
+
+    <div class="entry">
+      <h4>8. Tecnologias de uso dual</h4>
+      <p>São tecnologias que podem ser utilizadas tanto para fins militares quanto civis — como inteligência artificial, robótica, sistemas espaciais, computação, sensores, materiais avançados e tecnologias quânticas. O Ministério da Defesa brasileiro incentiva pesquisas de emprego dual para fortalecer a inovação e a autonomia tecnológica nacional.</p>
+      <div class="src">Fonte: Ministério da Defesa — Política de Ciência, Tecnologia e Inovação de Defesa · <a href="https://mdlegis.defesa.gov.br/norma_html/?ANO=2021&NUM=3063&SER=A" target="_blank">mdlegis.defesa.gov.br</a></div>
+    </div>
+
+    <div class="entry">
+      <h4>9. Principais impactos</h4>
+      <p>Novas empresas e mercados; empregos qualificados; formação de profissionais especializados; fortalecimento de universidades e centros de pesquisa; aumento da capacidade tecnológica da indústria; novos produtos e serviços; melhoria de transporte, comunicação e logística; maior competitividade econômica; e maior integração entre governo, universidades e empresas. Por outro lado, o processo exige cuidados com propriedade intelectual, segurança, custos de pesquisa e controle de tecnologias estratégicas.</p>
+      <div class="src">Fonte: Ministério da Defesa — PAED: benefícios para o país · <a href="https://www.gov.br/defesa/pt-br/assuntos/industria-de-defesa/paed/beneficios-do-paed-para-o-pais" target="_blank">gov.br/defesa</a></div>
+    </div>
+
+    <div class="conclusion-box">
+      <h4>Conclusão da Parte III</h4>
+      <p>A transferência de tecnologias militares para o uso civil é um importante mecanismo de inovação: tecnologias criadas para a defesa podem gerar benefícios para a sociedade e a economia, como mostram o GPS e as redes de computadores. No Brasil, essa transferência é vista como estratégica para fortalecer a indústria nacional, gerar empregos qualificados, estimular a pesquisa científica e aumentar a autonomia tecnológica — o investimento em ciência e tecnologia de defesa contribui também para o desenvolvimento econômico, industrial, científico e social do país.</p>
+    </div>
+  </div>
+
+  <!-- PARTE IV -->
+  <div class="part" id="parte4">
+    <div class="part-head"><div class="part-num">IV</div><h2>Defesa Aeroespacial Brasileira: Radares, Soberania, Satélites SGDC e Drones</h2></div>
+
+    <div class="entry">
+      <h4>1. Sistema de Radares da Força Aérea Brasileira</h4>
+      <p>O sistema de radares da FAB é composto por uma extensa rede de radares e centros de controle que operam em tempo real, detectando e localizando aeronaves que cruzam o espaço aéreo brasileiro.</p>
+      <p><b>Radares IRS-20MP/S:</b> operam em Modo S — padrão de máxima precisão para identificação de aeronaves — com raio de alcance de 256 NM (cerca de 500 km), atuando na aproximação e em rota, integrados a sistemas ADS-B que melhoram a qualidade dos sinais e a probabilidade de detecção.</p>
+      <p><b>Radares Ground Master Multi-Mission GM200 MM/A:</b> cobrem todo o espectro de ameaças, de mini drones em baixa altitude a alvos rápidos e ágeis a maiores distâncias, oferecendo consciência situacional superior e instantânea para vigilância e defesa aérea baseada em solo.</p>
+      <div class="src">Fonte: DECEA</div>
+    </div>
+
+    <div class="entry">
+      <h4>2. Soberania Nacional e a Força Aérea Brasileira</h4>
+      <p>A soberania nacional na FAB é garantida por meio de missões de defesa aérea, transporte logístico, busca e salvamento, apoio à saúde e controle do espaço aéreo, em sinergia com o Exército e a Marinha, formando um sistema de defesa coeso e complementar. A FAB também presta serviços de tráfego aéreo e busca e salvamento em áreas de difícil acesso, como comunidades ribeirinhas e indígenas.</p>
+      <p>A modernização da FAB — com o caça Saab Gripen e o cargueiro KC-390 Millennium — exemplifica a expansão contínua da capacidade de proteção e integração do território nacional.</p>
+      <div class="src">Fonte: FAB</div>
+    </div>
+
+    <div class="entry">
+      <h4>3. Satélites Brasileiros — Série SGDC</h4>
+      <p>O SGDC (Satélite Geoestacionário de Defesa e Comunicações Estratégicas) é operado pela Telebras em conjunto com o Centro de Operações Espaciais da FAB. O SGDC-1 está operacional e um segundo satélite está planejado.</p>
+      <p>A expectativa é que o sistema traga mais segurança às comunicações estratégicas do governo e militares, já que o controle é feito no Brasil — diferente dos satélites anteriores, controlados por estações fora do país ou por empresas de capital estrangeiro, o que trazia risco de interrupções em conflitos internacionais.</p>
+      <p>A intenção do governo é ter futuramente uma frota de três satélites, lançados em intervalos de cerca de cinco anos. O SGDC-1 foi lançado em maio de 2017 e opera nas bandas X (uso militar, Ministério da Defesa) e Ka (Telebras, segurança de redes de governo e ampliação do Programa Nacional de Banda Larga em regiões como Amazônia e Nordeste).</p>
+      <p>O satélite foi construído na França pela Thales Alenia Space, selecionada pela Visiona Tecnologia Espacial (joint-venture Telebras-Embraer), com compromisso contratual de transferência de tecnologia ao Brasil, conduzida pela Agência Espacial Brasileira (AEB). O lançamento foi feito pela Arianespace a partir do Centro Espacial de Kourou, na Guiana Francesa, em 2017.</p>
+      <div class="src">Fonte: Artigo da Wikipédia (com referências a Agência Brasil/EBC, FINEP, Revista Pesquisa FAPESP, Teletime, Defesanet e Gunter's Space Page)</div>
+    </div>
+
+    <div class="entry">
+      <h4>4. Uso de Drones na Defesa Aérea</h4>
+      <p>Segundo o G1, o Brasil utiliza drones militares próprios e importados para monitoramento, com previsão de uma versão de combate apenas a partir de 2027. As Forças Armadas contam com sete modelos de drones em operação, todos voltados ao monitoramento — nenhum de combate, diferente dos equipamentos usados pela Ucrânia contra a Rússia.</p>
+      <p>O Hermes 900, de fabricação israelense, é usado pela FAB e ajudou a localizar pessoas durante as enchentes no Rio Grande do Sul em maio de 2024. Já o Nauru 1000C, do Exército, poderá futuramente incorporar mísseis, o que colocaria o Brasil no grupo de mais de 50 países com drones de ataque, segundo o IISS.</p>
+      <p>O país prevê ter um drone de combate próprio até 2027, ampliando a capacidade ofensiva de uma frota hoje restrita a monitoramento e apoio a operações como busca e salvamento.</p>
+      <div class="src">Fonte: G1 (globo.com) — Fábio Santos e Arthur Stabile</div>
+    </div>
+  </div>
+
+</section>
+
+<footer>
+  Documento organizado a partir de fontes públicas — Ministério da Defesa, DARPA, OTAN, DECEA, FAB, Wikipédia, G1, GPS.gov e U.S. Naval History and Heritage Command · Pesquisa de campo com 43 participantes
+</footer>
 
 <script>
-pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+Chart.defaults.color = '#8B98AC';
+Chart.defaults.font.family = "'IBM Plex Mono', monospace";
+Chart.defaults.font.size = 11;
 
-const DEFAULT_PROMPT = `Você está transcrevendo uma página de uma prova antiga escaneada.
-Transcreva TODO o texto da página, preservando números de questão, enunciados e alternativas (a, b, c, d...), na ordem em que aparecem.
-Sempre que houver uma imagem, figura, gráfico, tabela desenhada ou diagrama, NÃO a descreva: escreva apenas a palavra IMAGEM sozinha, em uma linha própria, no lugar exato onde ela aparece.
-Não adicione comentários, títulos extras ou explicações suas. Responda somente com o conteúdo transcrito, em texto simples.`;
+const GREEN = '#4ADE80', GREEN2='#22C55E', AMBER='#F0A868', AMBER2='#D98A4A', BLUE='#5B9EF0', GREY='#6B7686', RED='#E06B6B';
+const palette = [GREEN, AMBER, BLUE, GREY, RED, GREEN2, AMBER2, '#B08AF0'];
 
-document.getElementById('promptBox').value = DEFAULT_PROMPT;
-
-// Tabs
-document.querySelectorAll('.tab-btn').forEach(btn=>{
-  btn.addEventListener('click', ()=>{
-    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
-    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
-    btn.classList.add('active');
-    document.getElementById('tab-'+btn.dataset.tab).classList.add('active');
-  });
-});
-
-const apiKeyInput = document.getElementById('apiKey');
-const keyStatus = document.getElementById('keyStatus');
-apiKeyInput.addEventListener('input', ()=>{
-  if(apiKeyInput.value.trim().length > 10){
-    keyStatus.textContent = 'Chave carregada nesta sessão.';
-    keyStatus.className = 'key-status ok';
-  } else {
-    keyStatus.textContent = '';
-  }
-});
-
-// File drop
-const drop = document.getElementById('drop');
-const fileInput = document.getElementById('fileInput');
-const fname = document.getElementById('fname');
-let selectedFile = null;
-
-drop.addEventListener('click', ()=>fileInput.click());
-['dragenter','dragover'].forEach(ev=>drop.addEventListener(ev, e=>{e.preventDefault(); drop.classList.add('drag');}));
-['dragleave','drop'].forEach(ev=>drop.addEventListener(ev, e=>{e.preventDefault(); drop.classList.remove('drag');}));
-drop.addEventListener('drop', e=>{
-  if(e.dataTransfer.files.length){ setFile(e.dataTransfer.files[0]); }
-});
-fileInput.addEventListener('change', ()=>{
-  if(fileInput.files.length){ setFile(fileInput.files[0]); }
-});
-function setFile(f){
-  if(f.type !== 'application/pdf'){ alert('Selecione um arquivo PDF.'); return; }
-  selectedFile = f;
-  fname.textContent = f.name;
-}
-
-// Logging / progress
-const logEl = document.getElementById('log');
-const barEl = document.getElementById('bar');
-const barFill = document.getElementById('barFill');
-function log(msg, cls){
-  logEl.classList.add('show');
-  const div = document.createElement('div');
-  div.className = 'ln' + (cls? ' '+cls : '');
-  div.innerHTML = `<span class="tag">›</span><span>${msg}</span>`;
-  logEl.appendChild(div);
-  logEl.scrollTop = logEl.scrollHeight;
-}
-function setProgress(pct){
-  barEl.classList.add('show');
-  barFill.style.width = pct+'%';
-}
-
-// PDF -> page images
-async function pdfToImages(file){
-  const buf = await file.arrayBuffer();
-  const pdf = await pdfjsLib.getDocument({data: buf}).promise;
-  const images = [];
-  for(let i=1;i<=pdf.numPages;i++){
-    const page = await pdf.getPage(i);
-    const viewport = page.getViewport({scale: 2});
-    const canvas = document.createElement('canvas');
-    canvas.width = viewport.width;
-    canvas.height = viewport.height;
-    const ctx = canvas.getContext('2d');
-    await page.render({canvasContext: ctx, viewport}).promise;
-    images.push(canvas.toDataURL('image/jpeg', 0.85));
-  }
-  return images;
-}
-
-// OpenRouter call
-async function transcribePage(dataUrl, apiKey, model, prompt){
-  const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-    method:'POST',
-    headers:{
-      'Authorization': `Bearer ${apiKey}`,
-      'Content-Type':'application/json',
-      'HTTP-Referer': location.href,
-      'X-Title':'Gabarito Digital - Conversor PDF para DOCX'
-    },
-    body: JSON.stringify({
-      model,
-      messages:[{
-        role:'user',
-        content:[
-          {type:'text', text: prompt},
-          {type:'image_url', image_url:{url: dataUrl}}
-        ]
-      }],
-      max_tokens: 2000
-    })
-  });
-  if(!res.ok){
-    const errText = await res.text().catch(()=> '');
-    throw new Error(`HTTP ${res.status}: ${errText.slice(0,200)}`);
-  }
-  const data = await res.json();
-  const content = data?.choices?.[0]?.message?.content;
-  if(!content) throw new Error('Resposta vazia do modelo.');
-  return content.trim();
-}
-
-// ---- Minimal DOCX builder (raw OOXML, zipped with JSZip) ----
-function escXml(s){
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-          .replace(/"/g,'&quot;').replace(/'/g,'&apos;');
-}
-function paragraphXml(line){
-  const trimmed = line.trim();
-  if(trimmed === ''){
-    return '<w:p/>';
-  }
-  const isImageMarker = /^\[?imagem\]?$/i.test(trimmed);
-  const isQuestionStart = /^\d+\s*[-.)–]/.test(trimmed) || /^quest[aã]o/i.test(trimmed);
-
-  if(isImageMarker){
-    return `<w:p><w:pPr><w:jc w:val="center"/><w:spacing w:before="120" w:after="120"/></w:pPr>` +
-      `<w:r><w:rPr><w:b/><w:color w:val="A63D2F"/></w:rPr><w:t xml:space="preserve">[ IMAGEM ]</w:t></w:r></w:p>`;
-  }
-  const boldOpen = isQuestionStart ? '<w:b/>' : '';
-  const spacingBefore = isQuestionStart ? '240' : '0';
-  return `<w:p><w:pPr><w:spacing w:before="${spacingBefore}" w:after="60"/></w:pPr>` +
-    `<w:r><w:rPr>${boldOpen}</w:rPr><w:t xml:space="preserve">${escXml(trimmed)}</w:t></w:r></w:p>`;
-}
-
-async function buildDocx(fullText, title){
-  const lines = fullText.split('\n');
-  const bodyParas = lines.map(paragraphXml).join('');
-
-  const titleXml = `<w:p><w:pPr><w:jc w:val="center"/><w:spacing w:after="240"/></w:pPr>` +
-    `<w:r><w:rPr><w:b/><w:sz w:val="32"/></w:rPr><w:t xml:space="preserve">${escXml(title)}</w:t></w:r></w:p>`;
-
-  const documentXml =
-`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
-<w:body>
-${titleXml}
-${bodyParas}
-<w:sectPr>
-<w:pgSz w:w="11906" w:h="16838"/>
-<w:pgMar w:top="1417" w:right="1417" w:bottom="1417" w:left="1417" w:header="708" w:footer="708" w:gutter="0"/>
-</w:sectPr>
-</w:body>
-</w:document>`;
-
-  const contentTypes =
-`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
-<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
-<Default Extension="xml" ContentType="application/xml"/>
-<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
-<Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/>
-</Types>`;
-
-  const rootRels =
-`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
-<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>
-<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/>
-</Relationships>`;
-
-  const coreProps =
-`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/">
-<dc:title>${escXml(title)}</dc:title>
-<dc:creator>Gabarito Digital</dc:creator>
-</cp:coreProperties>`;
-
-  const zip = new JSZip();
-  zip.file('[Content_Types].xml', contentTypes);
-  zip.folder('_rels').file('.rels', rootRels);
-  zip.folder('word').file('document.xml', documentXml);
-  zip.folder('docProps').file('core.xml', coreProps);
-
-  return await zip.generateAsync({type:'blob', mimeType:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'});
-}
-
-// Main flow
-const convertBtn = document.getElementById('convertBtn');
-const downloadBox = document.getElementById('download');
-const dlBtn = document.getElementById('dlBtn');
-const dlName = document.getElementById('dlName');
-let generatedBlob = null;
-let generatedName = 'prova_convertida.docx';
-let lastFullText = '';
-let lastTitle = '';
-
-convertBtn.addEventListener('click', async ()=>{
-  const apiKey = apiKeyInput.value.trim();
-  const model = document.getElementById('modelInput').value.trim();
-  const prompt = document.getElementById('promptBox').value.trim();
-
-  if(!selectedFile){ alert('Selecione um PDF primeiro.'); return; }
-  if(!apiKey){ alert('Coloque sua chave da OpenRouter na aba Configurações.'); return; }
-  if(!model){ alert('Informe o modelo de IA.'); return; }
-
-  logEl.innerHTML = '';
-  downloadBox.classList.remove('show');
-  convertBtn.disabled = true;
-  setProgress(3);
-  log('Lendo o PDF…');
-
-  try{
-    const images = await pdfToImages(selectedFile);
-    log(`${images.length} página(s) encontradas.`, 'ok');
-
-    const pageTexts = [];
-    for(let i=0;i<images.length;i++){
-      log(`Transcrevendo página ${i+1} de ${images.length}…`);
-      try{
-        const text = await transcribePage(images[i], apiKey, model, prompt);
-        pageTexts.push(text);
-        log(`Página ${i+1} concluída.`, 'ok');
-      }catch(err){
-        pageTexts.push(`[ERRO NA PÁGINA ${i+1}: ${err.message}]`);
-        log(`Falha na página ${i+1}: ${err.message}`, 'err');
-      }
-      setProgress(5 + Math.round(((i+1)/images.length)*85));
+function baseOpts(extra){
+  return Object.assign({
+    responsive:true,
+    plugins:{ legend:{display:false}, tooltip:{backgroundColor:'#1A2338', borderColor:'rgba(122,222,178,0.3)', borderWidth:1, titleFont:{family:"'IBM Plex Mono', monospace"}, bodyFont:{family:"'IBM Plex Mono', monospace"}} },
+    scales:{
+      x:{grid:{color:'rgba(122,222,178,0.06)'}, ticks:{font:{size:10.5}}},
+      y:{grid:{color:'rgba(122,222,178,0.06)'}, ticks:{font:{size:10.5}}, beginAtZero:true}
     }
-
-    log('Montando o documento .docx…');
-    const fullText = pageTexts.join('\n\n');
-    const title = selectedFile.name.replace(/\.pdf$/i,'');
-    generatedBlob = await buildDocx(fullText, title);
-    generatedName = title + '_convertido.docx';
-    lastFullText = fullText;
-    lastTitle = title;
-    dlName.textContent = generatedName;
-    downloadBox.classList.add('show');
-    setProgress(100);
-    log('Pronto! Documento gerado.', 'ok');
-  }catch(err){
-    log('Erro geral: ' + err.message, 'err');
-  }finally{
-    convertBtn.disabled = false;
-  }
-});
-
-dlBtn.addEventListener('click', ()=>{
-  if(!generatedBlob) return;
-  const url = URL.createObjectURL(generatedBlob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = generatedName;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
-});
-
-// ---- Editar DOCX tab ----
-const dropDocx = document.getElementById('dropDocx');
-const docxInput = document.getElementById('docxInput');
-const docxFname = document.getElementById('docxFname');
-const editBox = document.getElementById('editBox');
-const editTitle = document.getElementById('editTitle');
-const loadLastBtn = document.getElementById('loadLastBtn');
-const saveDocxBtn = document.getElementById('saveDocxBtn');
-const downloadEdit = document.getElementById('downloadEdit');
-const dlEditName = document.getElementById('dlEditName');
-const dlEditBtn = document.getElementById('dlEditBtn');
-let editedBlob = null;
-let editedName = 'documento_editado.docx';
-
-dropDocx.addEventListener('click', ()=>docxInput.click());
-['dragenter','dragover'].forEach(ev=>dropDocx.addEventListener(ev, e=>{e.preventDefault(); dropDocx.classList.add('drag');}));
-['dragleave','drop'].forEach(ev=>dropDocx.addEventListener(ev, e=>{e.preventDefault(); dropDocx.classList.remove('drag');}));
-dropDocx.addEventListener('drop', e=>{
-  if(e.dataTransfer.files.length){ loadDocxFile(e.dataTransfer.files[0]); }
-});
-docxInput.addEventListener('change', ()=>{
-  if(docxInput.files.length){ loadDocxFile(docxInput.files[0]); }
-});
-
-async function loadDocxFile(file){
-  if(!/\.docx$/i.test(file.name)){ alert('Selecione um arquivo .docx.'); return; }
-  docxFname.textContent = file.name;
-  try{
-    const text = await extractDocxText(file);
-    editBox.value = text;
-    editTitle.value = file.name.replace(/\.docx$/i, '') + '_editado';
-  }catch(err){
-    alert('Não foi possível ler este .docx: ' + err.message);
-  }
+  }, extra);
+}
+function donutOpts(){
+  return {
+    responsive:true,
+    cutout:'62%',
+    plugins:{ legend:{position:'bottom', labels:{boxWidth:10, padding:14, font:{size:11}}}, tooltip:{backgroundColor:'#1A2338', borderColor:'rgba(122,222,178,0.3)', borderWidth:1} }
+  };
 }
 
-async function extractDocxText(file){
-  const buf = await file.arrayBuffer();
-  const zip = await JSZip.loadAsync(buf);
-  const docXmlFile = zip.file('word/document.xml');
-  if(!docXmlFile) throw new Error('word/document.xml não encontrado.');
-  const xmlStr = await docXmlFile.async('string');
-  const dom = new DOMParser().parseFromString(xmlStr, 'application/xml');
-
-  const paragraphs = dom.getElementsByTagName('w:p');
-  const lines = [];
-  for(let i=0;i<paragraphs.length;i++){
-    const p = paragraphs[i];
-    const runsText = p.getElementsByTagName('w:t');
-    let line = '';
-    for(let j=0;j<runsText.length;j++){
-      line += runsText[j].textContent;
-    }
-    lines.push(line);
-  }
-  return lines.join('\n');
-}
-
-loadLastBtn.addEventListener('click', ()=>{
-  if(!lastFullText){ alert('Ainda não há nenhum documento gerado nesta sessão. Converta um PDF na aba Converter primeiro.'); return; }
-  editBox.value = lastFullText;
-  editTitle.value = (lastTitle || 'documento') + '_editado';
-  docxFname.textContent = '(carregado da conversão mais recente)';
+// Q1 - idade
+new Chart(document.getElementById('chartAge'), {
+  type:'bar',
+  data:{ labels:['11','12','13','14','15','16','17'],
+    datasets:[{ label:'Respostas', data:[4,5,1,8,15,7,1], backgroundColor:GREEN, borderRadius:3, maxBarThickness:38 }] },
+  options: baseOpts()
 });
 
-saveDocxBtn.addEventListener('click', async ()=>{
-  const text = editBox.value;
-  if(!text.trim()){ alert('Não há conteúdo para salvar.'); return; }
-  const title = editTitle.value.trim() || 'documento_editado';
-  saveDocxBtn.disabled = true;
-  try{
-    editedBlob = await buildDocx(text, title);
-    editedName = title + '.docx';
-    dlEditName.textContent = editedName;
-    downloadEdit.classList.add('show');
-  }catch(err){
-    alert('Erro ao gerar o documento: ' + err.message);
-  }finally{
-    saveDocxBtn.disabled = false;
-  }
+// Q2
+new Chart(document.getElementById('chartQ2'), {
+  type:'doughnut',
+  data:{ labels:['Sim','Não','Já ouvi falar'], datasets:[{ data:[20,12,11], backgroundColor:[GREEN,RED,AMBER], borderColor:'#111827', borderWidth:3 }] },
+  options: donutOpts()
 });
 
-dlEditBtn.addEventListener('click', ()=>{
-  if(!editedBlob) return;
-  const url = URL.createObjectURL(editedBlob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = editedName;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
+// Q3
+new Chart(document.getElementById('chartQ3'), {
+  type:'bar',
+  data:{ labels:['Aeronaves de caça','Radares','Satélites','Armamentos anti-aéreos','Drones','IA'],
+    datasets:[{ data:[16,15,6,4,1,1], backgroundColor:palette, borderRadius:3 }] },
+  options: baseOpts({ indexAxis:'y', scales:{ x:{grid:{color:'rgba(122,222,178,0.06)'}, beginAtZero:true}, y:{grid:{display:false}} } })
+});
+
+// Q4
+new Chart(document.getElementById('chartQ4'), {
+  type:'doughnut',
+  data:{ labels:['Não sabia','Já sabia'], datasets:[{ data:[22,21], backgroundColor:[GREY,GREEN], borderColor:'#111827', borderWidth:3 }] },
+  options: donutOpts()
+});
+
+// Q5
+new Chart(document.getElementById('chartQ5'), {
+  type:'bar',
+  data:{ labels:['Muito','Moderadamente','Não contribuem'],
+    datasets:[{ data:[23,18,2], backgroundColor:[GREEN,AMBER,RED], borderRadius:3, maxBarThickness:50 }] },
+  options: baseOpts()
+});
+
+// Q6
+new Chart(document.getElementById('chartQ6'), {
+  type:'doughnut',
+  data:{ labels:['Internet','Sistemas de comunicação','Satélites','GPS'], datasets:[{ data:[21,13,5,4], backgroundColor:[GREEN,BLUE,AMBER,GREY], borderColor:'#111827', borderWidth:3 }] },
+  options: donutOpts()
+});
+
+// Q7
+new Chart(document.getElementById('chartQ7'), {
+  type:'bar',
+  data:{ labels:['ITA','EPCAr','Nenhuma das opções','AFA','EEAr'],
+    datasets:[{ data:[16,15,10,1,1], backgroundColor:palette, borderRadius:3 }] },
+  options: baseOpts({ indexAxis:'y', scales:{ x:{grid:{color:'rgba(122,222,178,0.06)'}, beginAtZero:true}, y:{grid:{display:false}} } })
+});
+
+// Q9
+new Chart(document.getElementById('chartQ9'), {
+  type:'doughnut',
+  data:{ labels:['Sim','Talvez','Não'], datasets:[{ data:[29,10,4], backgroundColor:[GREEN,AMBER,RED], borderColor:'#111827', borderWidth:3 }] },
+  options: donutOpts()
 });
 </script>
+
 </body>
 </html>
