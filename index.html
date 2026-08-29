@@ -12,9 +12,9 @@
     --bg:#0A0E17;
     --panel:#111827;
     --panel-2:#161F32;
-    --line: rgba(122,222,178,0.16);
-    --green:#4ADE80;
-    --green-dim: rgba(74,222,128,0.55);
+    --line: rgba(120,170,255,0.16);
+    --green:#4DA3FF;
+    --green-dim: rgba(77,163,255,0.55);
     --amber:#F0A868;
     --ink:#E7ECF3;
     --ink-dim:#8B98AC;
@@ -25,7 +25,7 @@
   body{
     margin:0;
     background:
-      radial-gradient(ellipse at 50% -10%, rgba(74,222,128,0.09), transparent 55%),
+      radial-gradient(ellipse at 50% -10%, rgba(77,163,255,0.09), transparent 55%),
       var(--bg);
     color:var(--ink);
     font-family:'IBM Plex Sans', sans-serif;
@@ -44,8 +44,8 @@
   .gridbg{
     position:fixed; inset:0; pointer-events:none; z-index:1; opacity:0.35;
     background-image:
-      linear-gradient(rgba(122,222,178,0.05) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(122,222,178,0.05) 1px, transparent 1px);
+      linear-gradient(rgba(120,170,255,0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(120,170,255,0.05) 1px, transparent 1px);
     background-size: 42px 42px;
     mask-image: radial-gradient(ellipse at 50% 0%, black 0%, transparent 70%);
   }
@@ -84,20 +84,20 @@
     z-index:0; opacity:0.9;
   }
   .radar-ring{
-    position:absolute; border:1px solid rgba(74,222,128,0.14); border-radius:50%;
+    position:absolute; border:1px solid rgba(77,163,255,0.14); border-radius:50%;
     top:50%; left:50%; transform:translate(-50%,-50%);
   }
   .radar-sweep{
     position:absolute; top:50%; left:50%; width:50%; height:2px;
     transform-origin:left center;
-    background:linear-gradient(90deg, rgba(74,222,128,0.85), transparent);
+    background:linear-gradient(90deg, rgba(77,163,255,0.85), transparent);
     animation:sweep 5s linear infinite;
-    filter:drop-shadow(0 0 6px rgba(74,222,128,0.6));
+    filter:drop-shadow(0 0 6px rgba(77,163,255,0.6));
   }
   .radar-sweep::before{
     content:''; position:absolute; right:0; top:50%; width:50vw; height:50vw;
     transform:translate(0,-50%) rotate(0deg);
-    background:conic-gradient(from -18deg, rgba(74,222,128,0.28), transparent 40deg);
+    background:conic-gradient(from -18deg, rgba(77,163,255,0.28), transparent 40deg);
     border-radius:0;
   }
   @keyframes sweep{ from{transform:translateY(-50%) rotate(0deg);} to{transform:translateY(-50%) rotate(360deg);} }
@@ -130,8 +130,38 @@
     color:var(--green); transition:all .2s;
   }
   .btn.solid{background:var(--green); color:#08120C; border-color:var(--green); font-weight:600;}
-  .btn:hover{background:rgba(74,222,128,0.12);}
-  .btn.solid:hover{background:#63f097;}
+  .btn:hover{background:rgba(77,163,255,0.12);}
+  .btn.solid:hover{background:#6db8ff;}
+
+  .insignia-row{
+    z-index:2; display:flex; gap:14px; flex-wrap:wrap; justify-content:center; margin-bottom:36px;
+  }
+  .insignia{
+    display:flex; align-items:center; gap:7px;
+    font-family:'IBM Plex Mono', monospace; font-size:11.5px; letter-spacing:0.12em; color:var(--ink-dim);
+    border:1px solid var(--line); padding:7px 14px; border-radius:20px; background:rgba(20,27,44,0.5);
+  }
+  .insignia .wing{color:var(--green); transform:rotate(45deg); display:inline-block; font-size:12px;}
+
+  .hud-compass{
+    z-index:2; position:relative; width:100%; max-width:520px; margin-top:6px;
+    overflow:hidden; border-top:1px solid var(--line); border-bottom:1px solid var(--line); padding:10px 0;
+  }
+  .hud-track{
+    display:flex; gap:16px; white-space:nowrap; font-family:'IBM Plex Mono',monospace; font-size:11px;
+    color:var(--green-dim); letter-spacing:0.05em;
+    animation:hudscroll 22s linear infinite;
+  }
+  @keyframes hudscroll{ from{transform:translateX(0);} to{transform:translateX(-50%);} }
+  .hud-marker{
+    position:absolute; top:100%; left:50%; transform:translate(-50%,-4px);
+    color:var(--amber); font-size:10px;
+  }
+
+  .wing-divider{
+    display:inline-flex; align-items:center; gap:8px; margin-bottom:10px;
+  }
+  .wing-divider svg{width:22px; height:12px; fill:none; stroke:var(--amber); stroke-width:1.4;}
 
   section{padding:90px 24px; position:relative; z-index:2; max-width:1180px; margin:0 auto;}
   .section-head{margin-bottom:48px; max-width:720px;}
@@ -150,18 +180,22 @@
   .stat-cell .num{font-family:'Rajdhani',sans-serif; font-weight:700; font-size:2.4rem; color:var(--green);}
   .stat-cell .lbl{font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--ink-dim); letter-spacing:0.04em; margin-top:6px;}
 
-  .chart-grid{display:grid; grid-template-columns:1fr 1fr; gap:22px;}
+  .chart-grid{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
   .chart-card{
-    background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:22px 22px 12px;
+    background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:16px 16px 8px;
     position:relative;
   }
   .chart-card::before{
-    content:attr(data-tag); position:absolute; top:14px; right:16px; font-family:'IBM Plex Mono',monospace;
+    content:attr(data-tag); position:absolute; top:12px; right:14px; font-family:'IBM Plex Mono',monospace;
     font-size:10px; color:var(--green-dim); letter-spacing:0.1em;
   }
-  .chart-card h3{font-size:15px; margin:0 0 4px; color:var(--ink); text-transform:none; letter-spacing:0; font-family:'IBM Plex Sans'; font-weight:600;}
-  .chart-card .q-full{font-size:11.5px; color:var(--ink-dim); margin-bottom:14px; font-family:'IBM Plex Mono',monospace;}
-  .chart-card canvas{max-height:260px;}
+  .chart-card .q-full{
+    display:inline-block; font-size:16px; color:var(--ink); font-weight:600;
+    font-family:'IBM Plex Mono',monospace; line-height:1.45;
+    background:rgba(77,163,255,0.08); border:1px solid var(--line);
+    padding:10px 14px; border-radius:4px; margin-bottom:8px; max-width:92%;
+  }
+  .chart-canvas-wrap{position:relative; height:80px; width:100%;}
   .chart-card.full{grid-column:1 / -1;}
   .note{font-size:11.5px; color:var(--ink-dim); font-family:'IBM Plex Mono',monospace; margin-top:10px;}
 
@@ -246,77 +280,81 @@
     <div><b>9</b>perguntas de campo</div>
     <div><b>8</b>fontes públicas citadas</div>
   </div>
+  <div class="insignia-row">
+    <div class="insignia"><span class="wing">✈</span>ITA</div>
+    <div class="insignia"><span class="wing">✈</span>AFA</div>
+    <div class="insignia"><span class="wing">✈</span>EPCAr</div>
+    <div class="insignia"><span class="wing">✈</span>EEAr</div>
+  </div>
+  <div class="hud-compass">
+    <div class="hud-track">
+      <span>270</span><span>·</span><span>300</span><span>·</span><span>330</span><span>·</span><span>N</span><span>·</span><span>030</span><span>·</span><span>060</span><span>·</span><span>090</span><span>·</span><span>120</span><span>·</span><span>150</span><span>·</span><span>S</span><span>·</span><span>210</span><span>·</span><span>240</span><span>·</span>
+      <span>270</span><span>·</span><span>300</span><span>·</span><span>330</span><span>·</span><span>N</span><span>·</span><span>030</span><span>·</span><span>060</span><span>·</span><span>090</span><span>·</span><span>120</span><span>·</span><span>150</span><span>·</span><span>S</span><span>·</span><span>210</span><span>·</span><span>240</span><span>·</span>
+    </div>
+    <div class="hud-marker">▼</div>
+  </div>
 </section>
 
 <!-- ================= ESTATÍSTICAS ================= -->
 <section id="estatisticas">
   <div class="section-head">
-    <span class="eyebrow2">// PAINEL 01</span>
+    <div class="wing-divider"><svg viewBox="0 0 22 12"><path d="M1 6 L10 1 L21 6 L10 9 Z"/><path d="M10 1 L10 9" opacity="0.5"/></svg><span class="eyebrow2">PAINEL 01</span></div>
     <h2>O que os participantes da pesquisa responderam</h2>
     <p>Dados coletados por formulário com 43 participantes, majoritariamente adolescentes entre 11 e 17 anos, sobre percepção de tecnologia militar e defesa aeroespacial.</p>
   </div>
 
   <div class="stat-strip">
-    <div class="stat-cell"><div class="num">67%</div><div class="lbl">conhecem ou já ouviram falar de defesa do espaço aéreo</div></div>
+    <div class="stat-cell"><div class="num">72%</div><div class="lbl">conhecem ou já ouviram falar de defesa do espaço aéreo</div></div>
     <div class="stat-cell"><div class="num">95%</div><div class="lbl">acreditam que investimentos militares trazem avanços tecnológicos</div></div>
-    <div class="stat-cell"><div class="num">51%</div><div class="lbl">apontam a Internet como a maior herança militar na vida civil</div></div>
+    <div class="stat-cell"><div class="num">49%</div><div class="lbl">apontam a Internet como a maior herança militar na vida civil</div></div>
     <div class="stat-cell"><div class="num">91%</div><div class="lbl">querem aprender mais sobre tecnologias militares e aeroespaciais</div></div>
   </div>
 
   <div class="chart-grid">
 
     <div class="chart-card" data-tag="Q1">
-      <h3>Faixa etária dos respondentes</h3>
       <div class="q-full">"Quantos anos você tem?"</div>
-      <canvas id="chartAge"></canvas>
-      <div class="note">* 2 respostas (1 e 67 anos) foram tratadas como atípicas e excluídas deste gráfico.</div>
+      <div class="chart-canvas-wrap"><canvas id="chartAge"></canvas></div>
     </div>
 
     <div class="chart-card" data-tag="Q2">
-      <h3>Conhecimento sobre defesa do espaço aéreo</h3>
       <div class="q-full">"Você sabe o que significa defesa do espaço aéreo?"</div>
-      <canvas id="chartQ2"></canvas>
+      <div class="chart-canvas-wrap"><canvas id="chartQ2"></canvas></div>
     </div>
 
     <div class="chart-card" data-tag="Q3">
-      <h3>Tecnologia associada à defesa aérea</h3>
       <div class="q-full">"Qual dessas tecnologias você acredita que é utilizada na defesa aérea?"</div>
-      <canvas id="chartQ3"></canvas>
+      <div class="chart-canvas-wrap"><canvas id="chartQ3"></canvas></div>
     </div>
 
     <div class="chart-card" data-tag="Q4">
-      <h3>Origem militar do GPS</h3>
       <div class="q-full">"Você sabia que o GPS surgiu originalmente para fins militares?"</div>
-      <canvas id="chartQ4"></canvas>
+      <div class="chart-canvas-wrap"><canvas id="chartQ4"></canvas></div>
     </div>
 
     <div class="chart-card" data-tag="Q5">
-      <h3>Investimento militar → avanço tecnológico</h3>
       <div class="q-full">"Você acredita que investimentos militares contribuem para avanços tecnológicos da sociedade?"</div>
-      <canvas id="chartQ5"></canvas>
+      <div class="chart-canvas-wrap"><canvas id="chartQ5"></canvas></div>
     </div>
 
     <div class="chart-card" data-tag="Q6">
-      <h3>Tecnologia com maior impacto civil</h3>
       <div class="q-full">"Qual tecnologia militar você acredita ter maior impacto na vida civil?"</div>
-      <canvas id="chartQ6"></canvas>
+      <div class="chart-canvas-wrap"><canvas id="chartQ6"></canvas></div>
     </div>
 
     <div class="chart-card" data-tag="Q7">
-      <h3>Instituições da FAB conhecidas</h3>
       <div class="q-full">"Você conhece alguma instituição da Força Aérea Brasileira voltada para formação e tecnologia?"</div>
-      <canvas id="chartQ7"></canvas>
+      <div class="chart-canvas-wrap"><canvas id="chartQ7"></canvas></div>
     </div>
 
     <div class="chart-card" data-tag="Q9">
-      <h3>Interesse em aprender mais</h3>
       <div class="q-full">"Você gostaria de aprender mais sobre tecnologias militares e aeroespaciais?"</div>
-      <canvas id="chartQ9"></canvas>
+      <div class="chart-canvas-wrap"><canvas id="chartQ9"></canvas></div>
     </div>
 
     <div class="chart-card full" data-tag="Q8 · RESPOSTAS ABERTAS">
-      <h3>Importância da modernização tecnológica para a defesa do país</h3>
-      <div class="q-full">31 de 43 participantes responderam livremente; alguns trechos representativos:</div>
+      <div class="q-full">"Na sua opinião, qual é a importância da modernização tecnológica para a defesa do país?"</div>
+      <div class="note" style="margin:0 0 14px;">31 de 43 participantes responderam livremente; alguns trechos representativos:</div>
       <div class="quotes-box" style="border:none; background:transparent; padding:0;">
         <div class="quote">"A modernização tecnológica é crucial para garantir a soberania nacional e a defesa das nossas fronteiras e infraestruturas críticas contra ameaças modernas, incluindo os ataques cibernéticos."</div>
         <div class="quote">"Garantir a soberania do país sobre seu próprio território. Porém, no caso do Brasil, não é prioridade, pois ele não participa de conflitos recorrentes ou possui tensões militares."</div>
@@ -332,7 +370,7 @@
 <!-- ================= PESQUISA ================= -->
 <section id="pesquisa">
   <div class="section-head">
-    <span class="eyebrow2">// DOSSIÊ 02</span>
+    <div class="wing-divider"><svg viewBox="0 0 22 12"><path d="M1 6 L10 1 L21 6 L10 9 Z"/><path d="M10 1 L10 9" opacity="0.5"/></svg><span class="eyebrow2">DOSSIÊ 02</span></div>
     <h2>Pesquisa completa</h2>
     <p>Documento organizado a partir de fontes públicas — Ministério da Defesa, DARPA, OTAN, DECEA, FAB, Wikipédia, G1 e GPS.gov.</p>
   </div>
@@ -588,24 +626,26 @@ Chart.defaults.color = '#8B98AC';
 Chart.defaults.font.family = "'IBM Plex Mono', monospace";
 Chart.defaults.font.size = 11;
 
-const GREEN = '#4ADE80', GREEN2='#22C55E', AMBER='#F0A868', AMBER2='#D98A4A', BLUE='#5B9EF0', GREY='#6B7686', RED='#E06B6B';
+const GREEN = '#4DA3FF', GREEN2='#2F6FE0', AMBER='#F0A868', AMBER2='#D98A4A', BLUE='#5B9EF0', GREY='#6B7686', RED='#E06B6B';
 const palette = [GREEN, AMBER, BLUE, GREY, RED, GREEN2, AMBER2, '#B08AF0'];
 
 function baseOpts(extra){
   return Object.assign({
     responsive:true,
-    plugins:{ legend:{display:false}, tooltip:{backgroundColor:'#1A2338', borderColor:'rgba(122,222,178,0.3)', borderWidth:1, titleFont:{family:"'IBM Plex Mono', monospace"}, bodyFont:{family:"'IBM Plex Mono', monospace"}} },
+    maintainAspectRatio:false,
+    plugins:{ legend:{display:false}, tooltip:{backgroundColor:'#1A2338', borderColor:'rgba(120,170,255,0.3)', borderWidth:1, titleFont:{family:"'IBM Plex Mono', monospace"}, bodyFont:{family:"'IBM Plex Mono', monospace"}} },
     scales:{
-      x:{grid:{color:'rgba(122,222,178,0.06)'}, ticks:{font:{size:10.5}}},
-      y:{grid:{color:'rgba(122,222,178,0.06)'}, ticks:{font:{size:10.5}}, beginAtZero:true}
+      x:{grid:{color:'rgba(120,170,255,0.06)'}, ticks:{font:{size:10}}},
+      y:{grid:{color:'rgba(120,170,255,0.06)'}, ticks:{font:{size:10}}, beginAtZero:true}
     }
   }, extra);
 }
 function donutOpts(){
   return {
     responsive:true,
+    maintainAspectRatio:false,
     cutout:'62%',
-    plugins:{ legend:{position:'bottom', labels:{boxWidth:10, padding:14, font:{size:11}}}, tooltip:{backgroundColor:'#1A2338', borderColor:'rgba(122,222,178,0.3)', borderWidth:1} }
+    plugins:{ legend:{position:'bottom', labels:{boxWidth:9, padding:10, font:{size:10}}}, tooltip:{backgroundColor:'#1A2338', borderColor:'rgba(120,170,255,0.3)', borderWidth:1} }
   };
 }
 
@@ -629,7 +669,7 @@ new Chart(document.getElementById('chartQ3'), {
   type:'bar',
   data:{ labels:['Aeronaves de caça','Radares','Satélites','Armamentos anti-aéreos','Drones','IA'],
     datasets:[{ data:[16,15,6,4,1,1], backgroundColor:palette, borderRadius:3 }] },
-  options: baseOpts({ indexAxis:'y', scales:{ x:{grid:{color:'rgba(122,222,178,0.06)'}, beginAtZero:true}, y:{grid:{display:false}} } })
+  options: baseOpts({ indexAxis:'y', scales:{ x:{grid:{color:'rgba(120,170,255,0.06)'}, beginAtZero:true}, y:{grid:{display:false}} } })
 });
 
 // Q4
@@ -659,7 +699,7 @@ new Chart(document.getElementById('chartQ7'), {
   type:'bar',
   data:{ labels:['ITA','EPCAr','Nenhuma das opções','AFA','EEAr'],
     datasets:[{ data:[16,15,10,1,1], backgroundColor:palette, borderRadius:3 }] },
-  options: baseOpts({ indexAxis:'y', scales:{ x:{grid:{color:'rgba(122,222,178,0.06)'}, beginAtZero:true}, y:{grid:{display:false}} } })
+  options: baseOpts({ indexAxis:'y', scales:{ x:{grid:{color:'rgba(120,170,255,0.06)'}, beginAtZero:true}, y:{grid:{display:false}} } })
 });
 
 // Q9
