@@ -1,109 +1,117 @@
-import React, { useState } from 'react';
-import { LayoutDashboard, Plane, BarChart3, FileText } from 'lucide-react';
-import Hangar from './components/Hangar';
-import Stats from './components/Stats';
+  import React, { useState } from 'react';
+  import { LayoutDashboard, Plane, BarChart3, FileText, Shield, Zap, Globe } from 'lucide-react';
+  import Hangar from './components/Hangar';
+  import Stats from './components/Stats';
 
-export default function App() {
-  const [activeTab, setActiveTab] = useState('home');
+  export default function App() {
+    const [activeTab, setActiveTab] = useState('home');
 
-  return (
-    <div className="min-h-screen bg-[#0b1530] text-slate-200 font-sans selection:bg-brand-500/30">
-      {/* Sidebar Navigation */}
-      <nav className="fixed left-0 top-0 h-full w-20 md:w-64 bg-slate-950 border-r border-slate-800 flex flex-col z-50 transition-all">
-        <div className="p-6 mb-8">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-brand-600 flex items-center justify-center shadow-[0_0_15px_rgba(47,84,158,0.5)]">
-              <Plane className="text-white w-6 h-6" />
-            </div>
-            <span className="hidden md:block font-black text-xl tracking-tighter text-white">TCF <span className="text-brand-500">SQUAD</span></span>
-          </div>
-        </div>
-
-        <div className="flex-1 px-4 space-y-2">
-          {[
-            { id: 'home', label: 'Dashboard', icon: LayoutDashboard },
-            { id: 'hangar', label: 'Hangar de Caças', icon: Plane },
-            { id: 'stats', label: 'Estatísticas', icon: BarChart3 },
-            { id: 'docs', label: 'Documentação', icon: FileText },
-          ].map((item) => (
-            <button
-              key={item.id}
-              onClick={() => setActiveTab(item.id)}
-              className={`w-full flex items-center gap-4 p-3 rounded-xl transition-all ${
-                activeTab === item.id
-                ? 'bg-brand-500 text-white shadow-lg'
-                : 'text-slate-400 hover:bg-slate-900 hover:text-slate-200'
-              }`}
-            >
-              <item.icon className="w-5 h-5" />
-              <span className="hidden md:block font-medium">{item.label}</span>
-            </button>
-          ))}
-        </div>
-
-        <div className="p-6 border-t border-slate-800">
-          <div className="hidden md:block p-4 bg-slate-900 rounded-2xl border border-slate-800">
-            <p className="text-[10px] uppercase tracking-widest text-slate-500 mb-1">Status do Sistema</p>
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-              <span className="text-xs font-mono text-slate-300">Sistemas Online</span>
-            </div>
-          </div>
-        </div>
-      </nav>
-
-      {/* Main Content */}
-      <main className="ml-20 md:ml-64 min-h-screen p-8 transition-all">
-        {activeTab === 'home' && (
-          <div className="max-w-5xl mx-auto space-y-12 animate-in slide-in-from-bottom-4 duration-700">
-            <header className="text-center space-y-4 py-12">
-              <h1 className="text-6xl font-black text-white tracking-tighter">
-                Defesa <span className="text-brand-500">Aeroespacial</span>
-              </h1>
-              <p className="text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed">
-                Explorando a tecnologia militar, a soberania do espaço aéreo e o impacto da inovação na sociedade civil.
-              </p>
-              <div className="flex justify-center gap-4 pt-4">
-                <button onClick={() => setActiveTab('hangar')} className="btn-primary px-8 py-3 rounded-full font-bold hover:scale-105 transition-transform">
-                  Explorar Hangar
-                </button>
-                <button onClick={() => setActiveTab('stats')} className="px-8 py-3 rounded-full font-bold border border-slate-700 hover:bg-slate-800 transition-colors">
-                  Ver Estatísticas
-                </button>
+    return (
+      <div className="min-h-screen bg-[#0b1530] text-slate-200 font-sans selection:bg-brand-500/30">
+        {/* Sidebar Navigation */}
+        <nav className="fixed left-0 top-0 h-full w-20 md:w-64 bg-slate-950 border-r border-slate-800 flex flex-col z-50 transition-all">
+          <div className="p-6 mb-8">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-brand-600 flex items-center justify-center shadow-[0_0_15px_rgba(47,84,158,0.5)]">
+                <Plane className="text-white w-6 h-6" />
               </div>
-            </header>
-
-            <div className="grid md:grid-cols-3 gap-6">
-              {[
-                { label: 'Soberania', value: '100%', icon: Shield, color: 'text-blue-500' },
-                { label: 'Inovação', value: 'Alta', icon: Zap, color: 'text-yellow-500' },
-                { label: 'Alcance', value: 'Global', icon: Globe, color: 'text-green-500' },
-              ].map((stat, i) => (
-                <div key={i} className="bg-slate-900/50 border border-slate-800 p-6 rounded-3xl hover:border-brand-500/50 transition-colors group">
-                  <stat.icon className={`w-8 h-8 mb-4 ${stat.color} group-hover:scale-110 transition-transform`} />
-                  <p className="text-slate-400 text-sm">{stat.label}</p>
-                  <p className="text-2xl font-bold text-white">{stat.value}</p>
-                </div>
-              ))}
+              <span className="hidden md:block font-black text-xl tracking-tighter text-white">TCF <span
+  className="text-brand-500">SQUAD</span></span>
             </div>
           </div>
-        )}
 
-        {activeTab === 'hangar' && <Hangar />}
-        {activeTab === 'stats' && <Stats />}
-        {activeTab === 'docs' && (
-          <div className="max-w-4xl mx-auto text-center py-20">
-            <FileText className="w-16 h-16 text-slate-600 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-white mb-2">Documentação Oficial</h2>
-            <p className="text-slate-400">Os arquivos PDF do TCF estão disponíveis na pasta do projeto.</p>
+          <div className="flex-1 px-4 space-y-2">
+            {[
+              { id: 'home', label: 'Dashboard', icon: LayoutDashboard },
+              { id: 'hangar', label: 'Hangar de Caças', icon: Plane },
+              { id: 'stats', label: 'Estatísticas', icon: BarChart3 },
+              { id: 'docs', label: 'Documentação', icon: FileText },
+            ].map((item) => (
+              <button
+                key={item.id}
+                onClick={() => setActiveTab(item.id)}
+                className={`w-full flex items-center gap-4 p-3 rounded-xl transition-all ${
+                  activeTab === item.id
+                  ? 'bg-brand-500 text-white shadow-lg'
+                  : 'text-slate-400 hover:bg-slate-900 hover:text-slate-200'
+                }`}
+              >
+                <item.icon className="w-5 h-5" />
+                <span className="hidden md:block font-medium">{item.label}</span>
+              </button>
+            ))}
           </div>
-        )}
-      </main>
-    </div>
-  );
-}
 
-// Simple helper components for the home page
-function Shield({ className }) { return <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04M12 21.48l-7-7a11.955 11.955 0 01-1.38-3.44" /></svg>; }
-function Zap({ className }) { return <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>; }
-function Globe({ className }) { return <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.6 9h16.8M3.6 15h16.8M12 3v18" /></svg>; }
+          <div className="p-6 border-t border-slate-800">
+            <div className="hidden md:block p-4 bg-slate-900 rounded-2xl border border-slate-800">
+              <p className="text-[10px] uppercase tracking-widest text-slate-500 mb-1">Status do Sistema</p>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                <span className="text-xs font-mono text-slate-300">Sistemas Online</span>
+              </div>
+            </div>
+          </div>
+        </nav>
+
+        {/* Main Content */}
+        <main className="ml-20 md:ml-64 min-h-screen p-8 transition-all">
+          {activeTab === 'home' && (
+            <div className="max-w-5xl mx-auto space-y-12 animate-in slide-in-from-bottom-4 duration-700">
+              <header className="text-center space-y-4 py-12">
+                <h1 className="text-6xl font-black text-white tracking-tighter">
+                  Defesa <span className="text-brand-500">Aeroespacial</span>
+                </h1>
+                <p className="text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed">
+                  Explorando a tecnologia militar, a soberania do espaço aéreo e o impacto da inovação na sociedade civil.
+                </p>
+                <div className="flex justify-center gap-4 pt-4">
+                  <button onClick={() => setActiveTab('hangar')} className="bg-brand-600 text-white px-8 py-3 rounded-full font-bold
+  hover:bg-brand-500 transition-all active:scale-95 hover:scale-105">
+                    Explorar Hangar
+                  </button>
+                  <button onClick={() => setActiveTab('stats')} className="px-8 py-3 rounded-full font-bold border border-slate-700
+  hover:bg-slate-800 transition-colors">
+                    Ver Estatísticas
+                  </button>
+                </div>
+              </header>
+
+              <div className="grid md:grid-cols-3 gap-6">
+                {[
+                  { label: 'Soberania', value: '100%', icon: Shield, color: 'text-blue-500' },
+                  { label: 'Inovação', value: 'Alta', icon: Zap, color: 'text-yellow-500' },
+                  { label: 'Alcance', value: 'Global', icon: Globe, color: 'text-green-500' },
+                ].map((stat, i) => (
+                  <div key={i} className="bg-slate-900/50 border border-slate-800 p-6 rounded-3xl hover:border-brand-500/50 transition-colors
+  group">
+                    <stat.icon className={`w-8 h-8 mb-4 ${stat.color} group-hover:scale-110 transition-transform`} />
+                    <p className="text-slate-400 text-sm">{stat.label}</p>
+                    <p className="text-2xl font-bold text-white">{stat.value}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'hangar' && <Hangar />}
+          {activeTab === 'stats' && <Stats />}
+          {activeTab === 'docs' && (
+            <div className="max-w-4xl mx-auto text-center py-20">
+              <FileText className="w-16 h-16 text-slate-600 mx-auto mb-4" />
+              <h2 className="text-2xl font-bold text-white mb-2">Documentação Oficial</h2>
+              <p className="text-slate-400">Os arquivos PDF do TCF estão disponíveis na pasta do projeto.</p>
+            </div>
+          )}
+        </main>
+      </div>
+    );
+  }
+
+  function Shield({ className }) { return <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path
+  strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618
+  3.04M12 21.48l-7-7a11.955 11.955 0 01-1.38-3.44" /></svg>; }
+  function Zap({ className }) { return <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round"
+  strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>; }
+  function Globe({ className }) { return <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path
+  strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /><path strokeLinecap="round"
+  strokeLinejoin="round" strokeWidth={2} d="M3.6 9h16.8M3.6 15h16.8M12 3v18" /></svg>; }
