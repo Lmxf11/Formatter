@@ -1,0 +1,50 @@
+  @tailwind base;
+  @tailwind components;
+  @tailwind utilities;
+
+  :root {
+    --brand-500: #2f7cf6;
+    --brand-600: #1d62d1;
+  }
+
+  /* Estilos customizados para o tema de aviação */
+  body {
+    margin: 0;
+    padding: 0;
+    background-color: #0b1530;
+    color: #e2e8f0;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  .btn-primary {
+    @apply bg-brand-600 text-white px-6 py-2 rounded-full font-bold hover:bg-brand-500 transition-all active:scale-95;
+  }
+
+  /* Animação de entrada suave para as páginas */
+  .animate-in {
+    animation: fadeIn 0.5s ease-out;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Estilo para a barra de rolagem (Scrollbar) para combinar com o tema */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #0b1530;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #1e293b;
+    border-radius: 10px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #2f7cf6;
+  }
