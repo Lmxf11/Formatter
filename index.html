@@ -1,0 +1,41 @@
+ <!DOCTYPE html>
+  <html lang="pt-br">
+    <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <title>TCF Squad - Defesa Aeroespacial</title>
+      <script src="https://cdn.tailwindcss.com"></script>
+    </head>
+    <body class="bg-[#0b1530]">
+      <div id="root"></div>
+      <script type="module" src="/src/main.jsx"></script>
+    </body>
+  </html>
+
+  3. Além disso, notei que eu não tinha criado o arquivo src/main.jsx (que é quem liga o React ao HTML). Crie esse arquivo em
+     C:\Users\aeroq\OneDrive\Documentos\TCF-Site\src\main.jsx com este código:
+
+  import React from 'react'
+  import ReactDOM from 'react-dom/client'
+  import App from './App'
+  import './index.css'
+
+  ReactDOM.createRoot(document.getElementById('root')).render(
+    <React.StrictMode>
+      <App />
+    </React.StrictMode>
+  )
+
+  4. E por fim, crie o arquivo src/index.css para o Tailwind funcionar:
+  @tailwind base;
+  @tailwind components;
+  @tailwind utilities;
+
+  :root {
+    --brand-500: #2f7cf6;
+    --brand-600: #1d62d1;
+  }
+
+  .btn-primary {
+    @apply bg-brand-600 text-white px-6 py-2 rounded-full font-bold hover:bg-brand-500 transition-all active:scale-95;
+  }
