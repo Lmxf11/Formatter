@@ -8,7 +8,6 @@
 
     return (
       <div className="min-h-screen bg-[#0b1530] text-slate-200 font-sans selection:bg-brand-500/30">
-        {/* Sidebar Navigation */}
         <nav className="fixed left-0 top-0 h-full w-20 md:w-64 bg-slate-950 border-r border-slate-800 flex flex-col z-50 transition-all">
           <div className="p-6 mb-8">
             <div className="flex items-center gap-3">
@@ -19,7 +18,6 @@
   className="text-brand-500">SQUAD</span></span>
             </div>
           </div>
-
           <div className="flex-1 px-4 space-y-2">
             {[
               { id: 'home', label: 'Dashboard', icon: LayoutDashboard },
@@ -41,19 +39,7 @@
               </button>
             ))}
           </div>
-
-          <div className="p-6 border-t border-slate-800">
-            <div className="hidden md:block p-4 bg-slate-900 rounded-2xl border border-slate-800">
-              <p className="text-[10px] uppercase tracking-widest text-slate-500 mb-1">Status do Sistema</p>
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                <span className="text-xs font-mono text-slate-300">Sistemas Online</span>
-              </div>
-            </div>
-          </div>
         </nav>
-
-        {/* Main Content */}
         <main className="ml-20 md:ml-64 min-h-screen p-8 transition-all">
           {activeTab === 'home' && (
             <div className="max-w-5xl mx-auto space-y-12 animate-in slide-in-from-bottom-4 duration-700">
@@ -75,7 +61,6 @@
                   </button>
                 </div>
               </header>
-
               <div className="grid md:grid-cols-3 gap-6">
                 {[
                   { label: 'Soberania', value: '100%', icon: Shield, color: 'text-blue-500' },
@@ -92,7 +77,6 @@
               </div>
             </div>
           )}
-
           {activeTab === 'hangar' && <Hangar />}
           {activeTab === 'stats' && <Stats />}
           {activeTab === 'docs' && (
